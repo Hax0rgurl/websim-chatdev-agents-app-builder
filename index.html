@@ -1,0 +1,191 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatDev Agents App Builder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Basic styling */
+body {
+  font-family: 'Inter', sans-serif;
+  color: #fff;
+  line-height: 1.6;
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+  min-height: 100vh;
+  margin: 0;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  justify-content: center;
+}
+
+h1 {
+  font-size: 48px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+p {
+  font-size: 20px;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+#prompt {
+  width: 100%;
+  max-width: 600px;
+  height: 120px;
+  padding: 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 12px;
+  resize: vertical;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  margin: 0 auto;
+  display: block;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+#prompt::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#generateBtn {
+  margin-top: 20px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#generateBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+#loading {
+  display: none;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+#output {
+  margin-top: 40px;
+}
+
+iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  margin-top: 20px;
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+  h1 {
+    font-size: 36px;
+  }
+
+  p {
+    font-size: 18px;
+  }
+
+  #prompt {
+    width: 90%;
+    height: 100px;
+  }
+
+  #generateBtn {
+    width: 90%;
+    padding: 12px 0;
+  }
+
+  iframe {
+    height: 400px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ChatDev Agents App Builder</h1>
+  <p>Type in a prompt, and autonomous agents will create a fully functional web application based on your idea.</p>
+  <textarea id="prompt" rows="5" placeholder="Enter your prompt here..."></textarea>
+  <button id="generateBtn">Generate App</button>
+  <p id="loading">Generating your app...</p>
+  <div id="output"></div>
+</div>
+<script>
+document.getElementById('generateBtn').addEventListener('click', async function() {
+  const promptText = document.getElementById('prompt').value.trim();
+  if (!promptText) {
+    alert('Please enter a prompt.');
+    return;
+  }
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('output').innerHTML = '';
+  try {
+    const response = await fetch('/api/ai_completion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({ 
+        prompt: `As the "Programmer" agent, generate a complete HTML file based on the user's task:
+"{task}". Make sure all JavaScript and CSS are inlined within the HTML file. The code should begin with "<html>" and end with "</html>". Do not include any explanations or comments outside of the code.`,
+        data: {
+          task: promptText
+        }
+      }),
+    });
+    const data = await response.json();
+    const generatedCode = data.completion;
+    document.getElementById('output').innerHTML = '<iframe id="appFrame"></iframe>';
+    const appFrame = document.getElementById('appFrame');
+    const appDoc = appFrame.contentWindow.document;
+    appDoc.open();
+    appDoc.write(generatedCode);
+    appDoc.close();
+  } catch (error) {
+    console.error('Error generating app:', error);
+    alert('An error occurred while generating the app.');
+  }
+  document.getElementById('loading').style.display = 'none';
+});
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
