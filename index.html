@@ -145,21 +145,21 @@
       document.getElementById('loading').style.display = 'block';
       document.getElementById('output').innerHTML = '';
       try {
-        const response = await fetch('/api/ai_completion', {
+        const response = await fetch('/api/generate_app', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
           },
           body: JSON.stringify({ 
-            prompt: `As the "Programmer" agent, generate a complete HTML file based on the user's task: "{task}". Make sure all JavaScript and CSS are inlined within the HTML file. The code should begin with "<html>" and end with "</html>". Do not include any explanations or comments outside of the code.`,
+            prompt: `As the "Programmer" agent, generate a complete, tested, and fully functional HTML file based on the user's task: "{task}". Ensure that the code is tested, and redo it if it is incomplete or has errors. Use appropriate JavaScript libraries as needed to implement the required functionality. Make sure all JavaScript and CSS are inlined within the HTML file. The code should begin with "<html>" and end with "</html>". Do not include any explanations or comments outside of the code.`,
             data: {
               task: promptText
             }
           }),
         });
         const data = await response.json();
-        const generatedCode = data.completion;
+        const generatedCode = data.final_deliverable;
         document.getElementById('output').innerHTML = '<iframe id="appFrame"></iframe>';
         const appFrame = document.getElementById('appFrame');
         const appDoc = appFrame.contentWindow.document;
