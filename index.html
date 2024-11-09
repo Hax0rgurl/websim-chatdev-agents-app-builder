@@ -34,7 +34,7 @@
     }
 
     .container {
-      max-width: 600px;
+      max-width: 800px;
       width: 100%;
       padding: 20px;
       background: rgba(0, 0, 0, 0.4);
@@ -58,7 +58,7 @@
       text-align: center;
     }
 
-    #prompt {
+    #prompt, #urlInput {
       width: 100%;
       padding: 10px;
       border: none;
@@ -70,11 +70,11 @@
       color: #fff;
     }
 
-    #prompt::placeholder {
+    #prompt::placeholder, #urlInput::placeholder {
       color: rgba(255, 255, 255, 0.7);
     }
 
-    #generateBtn {
+    #generateBtn, #loadUrlBtn {
       width: 100%;
       padding: 12px;
       border: none;
@@ -85,9 +85,10 @@
       font-weight: 600;
       cursor: pointer;
       transition: background 0.3s;
+      margin-bottom: 20px;
     }
 
-    #generateBtn:hover {
+    #generateBtn:hover, #loadUrlBtn:hover {
       background: rgba(35, 166, 213, 1);
     }
 
@@ -102,7 +103,7 @@
     }
 
     /* Scrollbar styling for iframe content */
-    #appFrame {
+    #appFrame, #browserFrame {
       width: 100%;
       height: 600px;
       border: none;
@@ -114,8 +115,7 @@
       .container {
         margin: 20px;
       }
-
-      #appFrame {
+      #appFrame, #browserFrame {
         height: 400px;
       }
     }
@@ -130,6 +130,10 @@
     <button id="generateBtn">Generate App</button>
     <p id="loading">Generating your app...</p>
     <div id="output"></div>
+    <h2>Browser</h2>
+    <input type="text" id="urlInput" placeholder="Enter URL to load...">
+    <button id="loadUrlBtn">Load URL</button>
+    <iframe id="browserFrame"></iframe>
   </div>
   <script>
     document.getElementById('generateBtn').addEventListener('click', async function() {
@@ -148,8 +152,7 @@
             'Accept': 'application/json',
           },
           body: JSON.stringify({ 
-            prompt: `As the "Programmer" agent, generate a complete HTML file based on the user's task:
-"{task}". Make sure all JavaScript and CSS are inlined within the HTML file. The code should begin with "<html>" and end with "</html>". Do not include any explanations or comments outside of the code.`,
+            prompt: `As the "Programmer" agent, generate a complete HTML file based on the user's task: "{task}". Make sure all JavaScript and CSS are inlined within the HTML file. The code should begin with "<html>" and end with "</html>". Do not include any explanations or comments outside of the code.`,
             data: {
               task: promptText
             }
@@ -168,6 +171,16 @@
         alert('An error occurred while generating the app.');
       }
       document.getElementById('loading').style.display = 'none';
+    });
+
+    document.getElementById('loadUrlBtn').addEventListener('click', function() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) {
+        alert('Please enter a URL.');
+        return;
+      }
+      const browserFrame = document.getElementById('browserFrame');
+      browserFrame.src = url;
     });
   </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
