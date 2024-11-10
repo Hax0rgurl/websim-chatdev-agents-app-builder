@@ -257,7 +257,9 @@
                         },
                         body: JSON.stringify({ 
                             prompt: `
-You are the ${agent.role}. Your task is to ${agent.action} based on the current project code.
+You are the ${agent.role}. The user's project prompt is: "${prompt}"
+
+Your task is to ${agent.action} based on the current project code and the user's request.
 
 <typescript-interface>
 interface Response {
