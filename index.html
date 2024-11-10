@@ -19,38 +19,49 @@
             background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
             background-size: 400% 400%;
             animation: gradient 15s ease infinite;
-            min-height: 100vh;
+            margin: 0;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        main {
             display: flex;
             flex-direction: row;
-            margin: 0;
-            padding: 0;
+            min-height: calc(100vh - 100px);
         }
 
         .container {
-            width: 70%;
-            max-width: 1200px;
-            background: rgba(0, 0, 0, 0.4);
+            flex: 1;
             padding: 20px;
-            margin-top: 20px;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
         }
 
         .sidebar {
-            width: 30%;
-            max-width: 400px;
+            width: 300px;
             background: rgba(0, 0, 0, 0.7);
             padding: 20px;
-            margin-top: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            color: #fff;
+            box-sizing: border-box;
             overflow-y: auto;
-            height: calc(100vh - 40px);
         }
 
-        textarea, input[type='text'], button, iframe {
+        section {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        section h2 {
+            margin-top: 0;
+        }
+
+        textarea, input[type='file'], button, iframe {
             width: 100%;
             margin: 10px 0;
         }
@@ -69,24 +80,6 @@
             background-color: #0056b3;
         }
 
-        .agent-container {
-            margin-top: 20px;
-        }
-
-        #assetContainer {
-            margin-top: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-
-        iframe {
-            height: 500px;
-            border: none;
-            border-radius: 12px;
-        }
-
         .agent-status {
             margin-bottom: 20px;
             padding: 10px;
@@ -99,62 +92,100 @@
             font-size: 18px;
             color: #00bcd4;
         }
+
+        #assetContainer {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+        }
+
+        iframe {
+            height: 500px;
+            border: none;
+            border-radius: 12px;
+        }
+
+        #agentLog {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        #agentLog p {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="agent-status">
-            <h3>Project Manager</h3>
-            <p id="projectManagerStatus">Status: Awaiting prompt...</p>
-        </div>
-        <div class="agent-status">
-            <h3>Lead Developer</h3>
-            <p id="leadDeveloperStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>JavaScript Library Expert</h3>
-            <p id="jsLibraryExpertStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>Frontend Developer</h3>
-            <p id="frontendDeveloperStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>Backend Developer</h3>
-            <p id="backendDeveloperStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>DevOps Engineer</h3>
-            <p id="devOpsStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>Code Reviewer</h3>
-            <p id="codeReviewerStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>QA Engineer</h3>
-            <p id="qaEngineerStatus">Status: Pending task...</p>
-        </div>
-        <div class="agent-status">
-            <h3>UX/UI Designer</h3>
-            <p id="uxUiDesignerStatus">Status: Pending task...</p>
-        </div>
-    </div>
-    <div class="container">
+    <header>
         <h1>Software Developer Office - Collaborative Agents</h1>
-        <textarea id="prompt" rows="4" placeholder="Enter your project prompt here..."></textarea>
-        <button id="startBtn">Start Development</button>
-        <input type="file" id="assetUpload" accept=".jpg,.jpeg,.png,.gif,.js,.css,.html" />
-        <div id="assetContainer">Uploaded Assets: None yet.</div>
-
-        <h2>Code Collaboration Area</h2>
-        <iframe id="codeFrame"></iframe>
-        <div class="agent-container">
-            <h3>Agent Chat & Collaboration Log</h3>
-            <div id="agentLog"></div>
+    </header>
+    <main>
+        <div class="container">
+            <section class="prompt-section">
+                <h2>Project Prompt</h2>
+                <textarea id="prompt" rows="4" placeholder="Enter your project prompt here..."></textarea>
+                <button id="startBtn">Start Development</button>
+            </section>
+            <section class="asset-section">
+                <h2>Asset Manager</h2>
+                <input type="file" id="assetUpload" accept=".jpg,.jpeg,.png,.gif,.js,.css,.html" />
+                <div id="assetContainer">Uploaded Assets: None yet.</div>
+            </section>
+            <section class="code-section">
+                <h2>Code Collaboration Area</h2>
+                <iframe id="codeFrame"></iframe>
+            </section>
+            <section class="agent-log-section">
+                <h2>Agent Chat & Collaboration Log</h2>
+                <div id="agentLog"></div>
+            </section>
         </div>
-    </div>
-
+        <aside class="sidebar">
+            <h2>Agent Status</h2>
+            <div class="agent-status">
+                <h3>Project Manager</h3>
+                <p id="projectManagerStatus">Status: Awaiting prompt...</p>
+            </div>
+            <div class="agent-status">
+                <h3>Lead Developer</h3>
+                <p id="leadDeveloperStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>JavaScript Library Expert</h3>
+                <p id="jsLibraryExpertStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>Frontend Developer</h3>
+                <p id="frontendDeveloperStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>Backend Developer</h3>
+                <p id="backendDeveloperStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>DevOps Engineer</h3>
+                <p id="devOpsStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>Code Reviewer</h3>
+                <p id="codeReviewerStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>QA Engineer</h3>
+                <p id="qaEngineerStatus">Status: Pending task...</p>
+            </div>
+            <div class="agent-status">
+                <h3>UX/UI Designer</h3>
+                <p id="uxUiDesignerStatus">Status: Pending task...</p>
+            </div>
+        </aside>
+    </main>
     <script>
         document.getElementById('startBtn').addEventListener('click', async function() {
             const promptText = document.getElementById('prompt').value.trim();
