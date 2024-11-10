@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,7 +6,6 @@
     <base href="https://websim.ai/">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <style>
-        /* Restored vibrant gradient background animation */
         @keyframes gradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -178,14 +176,12 @@
                 }
                 document.getElementById("assetContainer").innerText += `\nAsset: ${file.name} uploaded and available for use.`;
                 document.getElementById('agentLog').innerHTML += `<p><strong>Asset Manager:</strong> New asset uploaded: ${file.name}</p>`;
-                // Assume the asset is available globally for all agents
             }
         });
 
         async function startAgentWorkflow(prompt) {
-            const apiUrl = 'https://websim.ai/api/generate_code'; // Updated to WebSim API endpoint
+            const apiUrl = '/api/ai_completion'; 
 
-            // Updated agents to include more roles in the office
             const agents = [
                 { name: 'Project Manager', action: 'plan the project', role: 'Project Manager', statusElement: 'projectManagerStatus' },
                 { name: 'Lead Developer', action: 'write the initial code', role: 'Lead Developer', statusElement: 'leadDeveloperStatus' },
@@ -203,16 +199,32 @@
             for (const agent of agents) {
                 document.getElementById('agentLog').innerHTML += `<p><strong>${agent.name}:</strong> I am going to ${agent.action}.</p>`;
                 document.getElementById(agent.statusElement).innerText = `Status: ${agent.action}`;
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating work time
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-                // Example call to the WebSim API (using Fetch API)
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ prompt: prompt, agent_role: agent.role, current_code: sharedCode })
+                        body: JSON.stringify({ 
+                            prompt: `
+You are the ${agent.role}. Your task is to ${agent.action} based on the current project code.
+
+<typescript-interface>
+interface Response {
+  generated_code: string;
+}
+</typescript-interface>
+<example>
+{
+  "generated_code": "<!-- updated code here -->"
+}
+</example>
+
+Please return a JSON object adhering to the Response interface above, with the updated code.`,
+                            data: sharedCode
+                        })
                     });
 
                     if (!response.ok) {
@@ -229,7 +241,6 @@
                     updateCodePreview(sharedCode);
                     document.getElementById(agent.statusElement).innerText = `Status: Task completed`;
 
-                    // Introduce feedback from agents
                     if (agent.name !== 'QA Engineer' && agent.name !== 'Code Reviewer') {
                         document.getElementById('agentLog').innerHTML += `<p><strong>${agent.name}:</strong> Requesting feedback from the next agent in line.</p>`;
                     }
@@ -241,10 +252,9 @@
                 }
             }
 
-            // Approval process: Lead Developer and Code Reviewer must approve the code
             document.getElementById('agentLog').innerHTML += `<p><strong>Lead Developer:</strong> Reviewing final version of the code.</p>`;
             document.getElementById('leadDeveloperStatus').innerText = `Status: Reviewing final code`;
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating review time
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             document.getElementById('agentLog').innerHTML += `<p><strong>Code Reviewer:</strong> Final code approved. Ready for deployment.</p>`;
             document.getElementById('codeReviewerStatus').innerText = `Status: Final code approved`;
