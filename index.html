@@ -108,6 +108,23 @@
             border-radius: 12px;
         }
 
+        .agent-log-section {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .agent-log-section h2 {
+            margin-top: 0;
+        }
+
+        .agent-log-section p {
+            margin: 5px 0;
+        }
+
         #agentLog {
             max-height: 300px;
             overflow-y: auto;
@@ -127,6 +144,10 @@
     </header>
     <main>
         <div class="container">
+            <section class="agent-log-section">
+                <h2>Agent Chat & Collaboration Log</h2>
+                <div id="agentLog"></div>
+            </section>
             <section class="prompt-section">
                 <h2>Project Prompt</h2>
                 <textarea id="prompt" rows="4" placeholder="Enter your project prompt here..."></textarea>
@@ -140,10 +161,6 @@
             <section class="code-section">
                 <h2>Code Collaboration Area</h2>
                 <iframe id="codeFrame"></iframe>
-            </section>
-            <section class="agent-log-section">
-                <h2>Agent Chat & Collaboration Log</h2>
-                <div id="agentLog"></div>
             </section>
         </div>
         <aside class="sidebar">
