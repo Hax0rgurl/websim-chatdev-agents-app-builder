@@ -115,11 +115,12 @@ Your responses must use only Websim APIs as documented, and output exactly one J
     data.progress = typeof data.progress === 'number' ? data.progress : window.appState.progress_value;
     data.continue = !!data.continue;
 
-    // Display AI reply
+    // Display AI text reply
     await UI.addMessage(data.reply, 'ai', window.appState.currentAgent);
 
-    // Handle code snippet if provided
+    // If code snippet is provided, show it in chat
     if (data.code) {
+      UI.addCodeSnippet(data.code);
       UI.codeEditor.value = data.code;
       UI.updatePreview(data.code);
     }

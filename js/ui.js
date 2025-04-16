@@ -148,6 +148,20 @@ function updatePreview(code) {
   }
 }
 
+/**
+ * Append a code snippet to the chat area
+ * @param {string} code - Code to display
+ */
+function addCodeSnippet(code) {
+  if (!code) return;
+  const pre = document.createElement('pre');
+  const codeEl = document.createElement('code');
+  codeEl.textContent = code;
+  pre.appendChild(codeEl);
+  chat.appendChild(pre);
+  chat.scrollTop = chat.scrollHeight;
+}
+
 // Export the functions
 window.UI = {
   chat,
@@ -167,5 +181,6 @@ window.UI = {
   getAgentName,
   getAgentAvatar,
   addMessage,
+  addCodeSnippet,
   updatePreview
 };

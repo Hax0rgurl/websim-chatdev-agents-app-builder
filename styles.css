@@ -155,6 +155,21 @@ h1 {
   background-size: cover
 }
 
+#chat pre {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 10px;
+  font-family: monospace;
+  color: #fff;
+  overflow-x: auto;
+  max-width: 80%;
+}
+
+#chat pre code {
+  white-space: pre-wrap;
+}
+
 #workspace {
   display: grid;
   grid-template-columns: 1fr 1fr;
