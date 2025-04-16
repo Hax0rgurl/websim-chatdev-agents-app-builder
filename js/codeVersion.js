@@ -4,6 +4,7 @@
  * Propose changes to the code
  */
 function proposeChanges() {
+  window.Logger.log('CodeVersion.proposeChanges', { agent: window.appState.currentAgent, code: window.UI.codeEditor.value });
   const currentCode = window.UI.codeEditor.value;
   if (!currentCode.trim()) return;
 
@@ -46,6 +47,7 @@ function generateDiff(oldCode, newCode) {
  * @param {boolean} approved - Is approved
  */
 function vote(approved) {
+  window.Logger.log('CodeVersion.vote', { approved });
   if (!window.appState.pendingChanges || !window.Room.room) return;
 
   const username = window.Room.room.clientId;
@@ -80,6 +82,8 @@ function checkVotes() {
     ? window.appState.codeHistory[window.appState.codeHistory.length - 1].code 
     : '';
   const isDeletion = window.appState.pendingChanges && lastCode && window.appState.pendingChanges.code.length < lastCode.length * 0.5;
+
+  window.Logger.log('CodeVersion.checkVotes', { votes: window.appState.votes, agents: Object.keys(window.Room.room?.peers||{}).length, approvals: Object.values(window.appState.votes).filter(v=>v).length, rejections: Object.values(window.appState.votes).filter(v=>!v).length, isDeletion: (window.appState.pendingChanges?.code.length < ((window.appState.codeHistory.slice(-1)[0]?.code.length||0)*0.5)) });
 
   if (isDeletion) {
     // Major deletions require unanimous approval
@@ -121,6 +125,7 @@ function updateVotingStatus() {
  * Accept pending changes
  */
 function acceptChanges() {
+  window.Logger.log('CodeVersion.acceptChanges', window.appState.pendingChanges);
   if (!window.appState.pendingChanges) return;
 
   window.appState.codeHistory.push(window.appState.pendingChanges);
@@ -136,6 +141,7 @@ function acceptChanges() {
  * Reject pending changes
  */
 function rejectChanges() {
+  window.Logger.log('CodeVersion.rejectChanges', window.appState.pendingChanges);
   window.appState.pendingChanges = null;
   window.appState.votes = {};
   document.querySelector('.vote-panel').classList.remove('active');
@@ -150,6 +156,7 @@ function rejectChanges() {
  * Update the code history display
  */
 function updateCodeHistory() {
+  window.Logger.log('CodeVersion.updateCodeHistory', window.appState.codeHistory);
   const historyDiv = document.querySelector('.code-history');
   historyDiv.innerHTML = window.appState.codeHistory.map((revision, i) => 
     `<div class="revision" data-index="${i}">Revision ${i+1} by ${revision.proposedBy} (${new Date(revision.timestamp).toLocaleString()})</div>`

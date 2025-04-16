@@ -6,11 +6,12 @@
  */
 function handleMessage(event) {
   if (!event || !event.data) return;
-
+  window.Logger.log('Messaging.handleMessage received', event.data);
   const data = event.data;
 
   try {
     if (data.type === 'agent_message') {
+      window.Logger.log('Messaging.handleMessage processing agent_message', data);
       if (data.message) {
         UI.addMessage(data.message, 'ai', window.appState.currentAgent);
       }
@@ -38,6 +39,7 @@ function handleMessage(event) {
         }, 2000);
       }
     } else if (data.type === 'propose_changes') {
+      window.Logger.log('Messaging.handleMessage processing propose_changes', data);
       window.appState.pendingChanges = data.changes;
       const votePanel = document.querySelector('.vote-panel');
       const diffPanel = document.querySelector('.code-diff');
@@ -47,6 +49,7 @@ function handleMessage(event) {
       diffPanel.innerHTML = CodeVersion.generateDiff(lastCode, window.appState.pendingChanges.code);
       votePanel.classList.add('active');
     } else if (data.type === 'vote') {
+      window.Logger.log('Messaging.handleMessage processing vote', data);
       window.appState.votes[data.voter] = data.approved;
       CodeVersion.checkVotes();
       CodeVersion.updateVotingStatus();
@@ -63,6 +66,7 @@ function handleMessage(event) {
  * @returns {Promise<void>}
  */
 async function generateResponse(userMessage, isAuto = false) {
+  window.Logger.log('Messaging.generateResponse start', { userMessage, isAuto });
   UI.thinking.style.display = 'block';
   UI.updateProgress(0);
 
@@ -91,6 +95,7 @@ Your responses must use only Websim APIs as documented, and output exactly one J
     ];
 
     // Call the Websim LLM API, request JSON output
+    window.Logger.log('Messaging.calling LLM', messages);
     const completion = await websim.chat.completions.create({ messages, json: true });
     const responseText = (completion.content || '').trim();
     // attempt to parse JSON, but fallback to raw text if parsing fails
@@ -114,6 +119,8 @@ Your responses must use only Websim APIs as documented, and output exactly one J
     data.next_agent = data.next_agent || window.appState.currentAgent;
     data.progress = typeof data.progress === 'number' ? data.progress : window.appState.progress_value;
     data.continue = !!data.continue;
+
+    window.Logger.log('Messaging.LLM response', data);
 
     // Display AI text reply
     await UI.addMessage(data.reply, 'ai', window.appState.currentAgent);
@@ -144,6 +151,7 @@ Your responses must use only Websim APIs as documented, and output exactly one J
 
     // Broadcast to other clients
     if (window.Room.room) {
+      window.Logger.log('Messaging.send agent_message', { reply: data.reply, code: data.code, next_agent: data.next_agent, progress: data.progress, continue: data.continue });
       window.Room.room.send({
         type: 'agent_message',
         message: data.reply,
@@ -159,6 +167,7 @@ Your responses must use only Websim APIs as documented, and output exactly one J
     await UI.addMessage("An error occurred while contacting the AI. Please try again later.", 'ai', 'project-manager');
   } finally {
     UI.thinking.style.display = 'none';
+    window.Logger.log('Messaging.generateResponse finished');
   }
 }
 

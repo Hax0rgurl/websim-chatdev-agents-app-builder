@@ -19,6 +19,7 @@ const toggleApiDocsBtn = document.getElementById('toggleApiDocs');
  * @param {number} value - Progress value (0-100)
  */
 function updateProgress(value) {
+  window.Logger.log('UI.updateProgress', value);
   if (progress) {
     progress.style.width = `${value}%`;
     window.appState.progress_value = value;
@@ -30,6 +31,7 @@ function updateProgress(value) {
  * @param {string} role - Agent role
  */
 function highlightAgent(role) {
+  window.Logger.log('UI.highlightAgent', role);
   if (!role) {
     console.warn('No role specified for highlighting agent');
     return;
@@ -81,6 +83,7 @@ function getAgentAvatar(role) {
  * @returns {Promise<void>}
  */
 async function addMessage(text, sender = 'user', agentRole = null) {
+  window.Logger.log('UI.addMessage', { text, sender, agentRole });
   if (!text) return;
 
   const p = document.createElement('p');
@@ -153,6 +156,7 @@ function updatePreview(code) {
  * @param {string} code - Code to display
  */
 function addCodeSnippet(code) {
+  window.Logger.log('UI.addCodeSnippet', code);
   if (!code) return;
   const pre = document.createElement('pre');
   const codeEl = document.createElement('code');

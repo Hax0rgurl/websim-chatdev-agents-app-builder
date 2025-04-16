@@ -6,6 +6,7 @@ let room;
  * @returns {Promise<void>}
  */
 async function initializeRoom() {
+  window.Logger.log('Room.initializeRoom');
   if (!room) {
     room = new WebsimSocket();
   }
@@ -13,6 +14,7 @@ async function initializeRoom() {
 
   // Load any existing roomState
   const initial = room.roomState || {};
+  window.Logger.log('Room.initialState', initial);
   if (initial.conversation) {
     window.appState.conversation = initial.conversation;
     UI.chat.innerHTML = '';
@@ -40,6 +42,7 @@ async function initializeRoom() {
 
   // Subscribe to shared state updates
   room.subscribeRoomState(state => {
+    window.Logger.log('Room.subscribeRoomState update', state);
     if (state.conversation) {
       window.appState.conversation = state.conversation;
       UI.chat.innerHTML = '';
@@ -69,6 +72,7 @@ async function initializeRoom() {
  * Push local project UI state into the shared roomState
  */
 function updateProjectState() {
+  window.Logger.log('Room.updateProjectState', { conversation: window.appState.conversation, currentAgent: window.appState.currentAgent, progress: window.appState.progress_value });
   if (!room) return;
   room.updateRoomState({
     conversation: window.appState.conversation,
@@ -81,6 +85,7 @@ function updateProjectState() {
  * Push local code-history into the shared roomState
  */
 function updateCodeState() {
+  window.Logger.log('Room.updateCodeState', window.appState.codeHistory);
   if (!room) return;
   room.updateRoomState({
     codeHistory: window.appState.codeHistory
