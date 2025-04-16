@@ -1,298 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="https://websim.ai/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <div class="container">
-    <div class="grid">
-      <div class="sidebar">
-        <h1>Development Team</h1>
-        <div class="agent" data-role="project-manager">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#64B5F6"/>
-              <circle cx="25" cy="18" r="8" fill="#90CAF9"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#64B5F6"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#90CAF9"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,24 25,24 27,24 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Sarah Chen</div>
-            <div class="agent-role">Project Manager</div>
-          </div>
+  <div class="app-layout">
+    <div id="sidebar-container"></div>
+    
+    <div class="main-area">
+      <div class="chat-panel">
+        <div class="panel-header">
+          <h2>Team Chat</h2>
         </div>
-        <div class="agent" data-role="product-owner">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#4DB6AC"/>
-              <circle cx="25" cy="18" r="8" fill="#80CBC4"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#4DB6AC"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#80CBC4"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,25 25,24 27,23 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Michael Rodriguez</div>
-            <div class="agent-role">Product Owner</div>
-          </div>
+        <div class="chat-scroll-area">
+          <div id="chat"></div>
         </div>
-        <div class="agent" data-role="lead-developer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#7986CB"/>
-              <circle cx="25" cy="18" r="8" fill="#9FA8DA"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#7986CB"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#9FA8DA"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M20,22 C20,22 22,24 25,24 28,24 30,22 30,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
+        
+        <div class="input-area">
+          <div class="status-bar">
+            <div class="thinking">Team is collaborating<span class="thinking-dots"></span></div>
+            <div class="progress-bar"><div class="progress"></div></div>
           </div>
-          <div class="agent-info">
-            <div class="agent-name">James Wilson</div>
-            <div class="agent-role">Lead Developer</div>
+          <div class="input-wrapper">
+            <textarea id="prompt" rows="1" placeholder="Describe what to build..."></textarea>
+            <button id="generateBtn" title="Send Message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
           </div>
-        </div>
-        <div class="agent" data-role="developer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#FFB74D"/>
-              <circle cx="25" cy="18" r="8" fill="#FFCC80"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#FFB74D"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#FFCC80"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,23 C21,23 23,21 25,21 27,21 29,23 29,23" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Emily Zhang</div>
-            <div class="agent-role">Developer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="code-reviewer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#9575CD"/>
-              <circle cx="25" cy="18" r="8" fill="#B39DDB"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#9575CD"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#B39DDB"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M20,22 C20,22 23,26 25,26 27,26 30,22 30,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">David Kumar</div>
-            <div class="agent-role">Code Reviewer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="qa-engineer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#F06292"/>
-              <circle cx="25" cy="18" r="8" fill="#F48FB1"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#F06292"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#F48FB1"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,24 25,24 27,24 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Lisa Patel</div>
-            <div class="agent-role">QA Engineer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="designer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#4FC3F7"/>
-              <circle cx="25" cy="18" r="8" fill="#81D4FA"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#4FC3F7"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#81D4FA"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,26 25,24 27,22 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Alex Morgan</div>
-            <div class="agent-role">UX/UI Designer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="devops">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#81C784"/>
-              <circle cx="25" cy="18" r="8" fill="#A5D6A7"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#81C784"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#A5D6A7"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M20,22 C20,22 23,24 25,24 27,24 30,22 30,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Sam Taylor</div>
-            <div class="agent-role">DevOps Engineer</div>
-          </div>
-        </div>
-        <div class="api-docs-toggle">
-          <button id="toggleApiDocs">Show API Documentation</button>
         </div>
       </div>
-      <div class="main-content">
-        <div id="chat"></div>
-        <div class="thinking">Team is collaborating<span class="thinking-dots"></span></div>
-        <div class="progress-bar">
-          <div class="progress"></div>
-        </div>
-        <textarea id="prompt" rows="3" placeholder="Describe what you'd like to build..."></textarea>
-        <button id="generateBtn">Send Message</button>
-        <div id="workspace">
-          <div class="code-controls">
-            <button id="proposeBtn">Propose Changes</button>
-            <button id="viewHistoryBtn">View History</button>
-          </div>
-          <div class="vote-panel">
-            <h3>Proposed Changes</h3>
-            <div class="code-diff"></div>
-            <div class="vote-buttons">
-              <button class="vote-btn approve-btn">Approve</button>
-              <button class="vote-btn reject-btn">Reject</button>
-            </div>
-          </div>
-          <div class="code-history"></div>
-          <textarea id="code-editor" placeholder="Code will appear here for testing..."></textarea>
-          <iframe id="preview"></iframe>
-        </div>
-      </div>
+      
+      <div id="workspace-container"></div>
     </div>
   </div>
 
-  <!-- API Documentation Modal -->
-  <div id="apiDocsModal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-      <h2>Websim API Documentation</h2>
-      
-      <h3>WebsimSocket API - For Realtime Multiplayer</h3>
-      <div class="api-section">
-        <pre><code>// Initialize the room connection
-const room = new WebsimSocket();
-await room.initialize();
-
-// Update your client's presence
-room.updatePresence({
-  x: 100, 
-  y: 200,
-  username: "player1"
-});
-
-// Update shared room state 
-room.updateRoomState({
-  gameState: "started",
-  score: {
-    team1: 5,
-    team2: 3
-  }
-});
-
-// Subscribe to presence updates
-room.subscribePresence((allPresence) => {
-  console.log("Players:", allPresence);
-});
-
-// Subscribe to room state updates
-room.subscribeRoomState((state) => {
-  console.log("Game state:", state);
-});
-
-// Send events to other clients
-room.send({
-  type: "move",
-  x: 50,
-  y: 75
-});
-
-// Listen for events from other clients
-room.onmessage = (event) => {
-  if (event.data.type === "move") {
-    movePiece(event.data.x, event.data.y);
-  }
-};</code></pre>
-      </div>
-      
-      <h3>Collection API - For Persistent Data</h3>
-      <div class="api-section">
-        <pre><code>// Create a new record
-const post = await room.collection('post').create({
-  message: "Hello world!",
-  timestamp: Date.now()
-});
-
-// Get all records
-const posts = room.collection('post').getList();
-
-// Get filtered records
-const userPosts = room.collection('post')
-  .filter({ author: "username" })
-  .getList();
-
-// Update a record
-await room.collection('post').update(post.id, {
-  message: "Updated message"
-});
-
-// Delete a record
-await room.collection('post').delete(post.id);
-
-// Subscribe to changes
-room.collection('post').subscribe((posts) => {
-  console.log("Posts updated:", posts);
-});</code></pre>
-      </div>
-      
-      <h3>LLM API - For AI Functionality</h3>
-      <div class="api-section">
-        <pre><code>// Generate text with AI
-const completion = await websim.chat.completions.create({
-  messages: [
-    {
-      role: "system",
-      content: "You are a helpful assistant."
-    },
-    {
-      role: "user",
-      content: "What is the capital of France?"
-    }
-  ]
-});
-
-// Generate images with AI
-const image = await websim.imageGen({
-  prompt: "A beautiful sunset over mountains",
-  aspect_ratio: "16:9"
-});</code></pre>
-      </div>
-    </div>
-  </div>
+  <div id="modals-container"></div>
 
   <!-- Script imports -->
+  <script src="js/components.js"></script>
   <script src="js/room.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/messaging.js"></script>
+  <script src="js/templates.js"></script>
   <script src="js/codeVersion.js"></script>
   <script src="js/main.js"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>

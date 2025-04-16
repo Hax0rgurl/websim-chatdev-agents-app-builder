@@ -90,14 +90,22 @@ Your responses must use only Websim APIs as documented, and output exactly one J
       ...(userMessage ? [{ role: 'user', content: userMessage }] : [])
     ];
 
-    // Call the Websim LLM API
-    const completion = await websim.chat.completions.create({ messages });
+    // Call the Websim LLM API, request JSON output
+    const completion = await websim.chat.completions.create({ messages, json: true });
     const responseText = (completion.content || '').trim();
+    // attempt to parse JSON, but fallback to raw text if parsing fails
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (e) {
-      throw new Error('Invalid JSON from AI');
+      console.warn('Received non-JSON response from AI, using raw text reply', e);
+      data = {
+        reply: responseText,
+        code: '',
+        next_agent: window.appState.currentAgent,
+        progress: window.appState.progress_value,
+        continue: false
+      };
     }
 
     // Ensure defaults
@@ -146,14 +154,8 @@ Your responses must use only Websim APIs as documented, and output exactly one J
     }
   } catch (error) {
     console.error('Error generating response:', error);
-    // Show a friendly retry message
-    await UI.addMessage("I'm having trouble right now. Let's try again shortly.", 'ai', 'project-manager');
-    // retry once
-    setTimeout(() => {
-      if (window.appState.isAutoConversing) {
-        generateResponse(userMessage || '', isAuto);
-      }
-    }, 3000);
+    // Let the user know something went wrong
+    await UI.addMessage("An error occurred while contacting the AI. Please try again later.", 'ai', 'project-manager');
   } finally {
     UI.thinking.style.display = 'none';
   }
