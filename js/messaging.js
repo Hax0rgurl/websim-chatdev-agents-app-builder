@@ -12,24 +12,21 @@ function handleMessage(event) {
   try {
     if (data.type === 'agent_message') {
       window.Logger.log('Messaging.handleMessage processing agent_message', data);
+      const speaker = data.agent || window.appState.currentAgent;
       if (data.message) {
-        UI.addMessage(data.message, 'ai', window.appState.currentAgent);
+        UI.addMessage(data.message, 'ai', speaker);
       }
-
       if (data.code) {
         UI.codeEditor.value = data.code;
         UI.updatePreview(data.code);
       }
-
       if (data.next_agent) {
         window.appState.currentAgent = data.next_agent;
         UI.highlightAgent(window.appState.currentAgent);
       }
-
       if (typeof data.progress === 'number') {
         UI.updateProgress(data.progress);
       }
-
       if (window.appState.isAutoConversing && data.continue) {
         clearTimeout(window.appState.autoConversationTimeout);
         window.appState.autoConversationTimeout = setTimeout(() => {
@@ -72,15 +69,18 @@ async function generateResponse(userMessage, isAuto = false) {
 
   try {
     // Build a system prompt instructing agents and JSON output
-    const systemPrompt = `You are a collaborative team of AI development agents working together to build Websim-specific projects.
-Each agent has a role and responsibilities (e.g., project-manager, product-owner, lead-developer, developer, code-reviewer, QA-engineer, designer, devops).
-Your responses must use only Websim APIs as documented, and output exactly one JSON object with keys:
+    const systemPrompt = `You are a team of AI development agents collaborating on Websim projects.
+Rotate through agents in order: project-manager, product-owner, lead-developer, developer, code-reviewer, QA-engineer, designer, devops.
+On each turn, only the current agent speaks and then set "next_agent" to the next role.
+Begin with "project-manager" outlining the HTML/CSS/JS scaffold for the app.
+Respond with exactly one JSON object (no extra text):
 {
   "reply": "text response",
   "code": "HTML/CSS/JS code if any",
+  "agent": "role-of-speaking-agent",
   "next_agent": "role-of-next-agent",
-  "progress": number-between-0-and-100,
-  "continue": true-or-false
+  "progress": number between 0 and 100,
+  "continue": true or false
 }`;
 
     // Prepare message history for LLM
@@ -123,7 +123,7 @@ Your responses must use only Websim APIs as documented, and output exactly one J
     window.Logger.log('Messaging.LLM response', data);
 
     // Display AI text reply
-    await UI.addMessage(data.reply, 'ai', window.appState.currentAgent);
+    await UI.addMessage(data.reply, 'ai', data.agent);
 
     // If code snippet is provided, show it in chat
     if (data.code) {
@@ -134,7 +134,7 @@ Your responses must use only Websim APIs as documented, and output exactly one J
 
     // Advance to next agent
     window.appState.currentAgent = data.next_agent;
-    UI.highlightAgent(window.appState.currentAgent);
+    UI.highlightAgent(data.next_agent);
 
     // Update progress bar
     UI.updateProgress(data.progress);
@@ -151,14 +151,18 @@ Your responses must use only Websim APIs as documented, and output exactly one J
 
     // Broadcast to other clients
     if (window.Room.room) {
-      window.Logger.log('Messaging.send agent_message', { reply: data.reply, code: data.code, next_agent: data.next_agent, progress: data.progress, continue: data.continue });
+      window.Logger.log('Messaging.send agent_message', {
+        agent: data.agent, reply: data.reply, code: data.code, next_agent: data.next_agent, progress: data.progress, continue: data.continue
+      });
       window.Room.room.send({
         type: 'agent_message',
+        agent: data.agent,
         message: data.reply,
         code: data.code,
         next_agent: data.next_agent,
         progress: data.progress,
-        continue: data.continue
+        continue: data.continue,
+        echo: false
       });
     }
   } catch (error) {

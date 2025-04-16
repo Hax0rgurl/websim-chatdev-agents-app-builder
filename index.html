@@ -188,105 +188,63 @@
       <span class="close-modal">&times;</span>
       <h2>Websim API Documentation</h2>
       
-      <h3>WebsimSocket API - For Realtime Multiplayer</h3>
-      <div class="api-section">
-        <pre><code>// Initialize the room connection
-const room = new WebsimSocket();
-await room.initialize();
-
-// Update your client's presence
-room.updatePresence({
-  x: 100, 
-  y: 200,
-  username: "player1"
-});
-
-// Update shared room state 
-room.updateRoomState({
-  gameState: "started",
-  score: {
-    team1: 5,
-    team2: 3
-  }
-});
-
-// Subscribe to presence updates
-room.subscribePresence((allPresence) => {
-  console.log("Players:", allPresence);
-});
-
-// Subscribe to room state updates
-room.subscribeRoomState((state) => {
-  console.log("Game state:", state);
-});
-
-// Send events to other clients
-room.send({
-  type: "move",
-  x: 50,
-  y: 75
-});
-
-// Listen for events from other clients
-room.onmessage = (event) => {
-  if (event.data.type === "move") {
-    movePiece(event.data.x, event.data.y);
-  }
-};</code></pre>
-      </div>
-      
-      <h3>Collection API - For Persistent Data</h3>
-      <div class="api-section">
-        <pre><code>// Create a new record
-const post = await room.collection('post').create({
-  message: "Hello world!",
-  timestamp: Date.now()
-});
-
-// Get all records
-const posts = room.collection('post').getList();
-
-// Get filtered records
-const userPosts = room.collection('post')
-  .filter({ author: "username" })
-  .getList();
-
-// Update a record
-await room.collection('post').update(post.id, {
-  message: "Updated message"
-});
-
-// Delete a record
-await room.collection('post').delete(post.id);
-
-// Subscribe to changes
-room.collection('post').subscribe((posts) => {
-  console.log("Posts updated:", posts);
-});</code></pre>
-      </div>
-      
-      <h3>LLM API - For AI Functionality</h3>
+      <!-- LLM API -->
+      <h3>LLM API</h3>
       <div class="api-section">
         <pre><code>// Generate text with AI
 const completion = await websim.chat.completions.create({
   messages: [
-    {
-      role: "system",
-      content: "You are a helpful assistant."
-    },
-    {
-      role: "user",
-      content: "What is the capital of France?"
-    }
-  ]
+    { role: 'system', content: 'You are a helpful assistant.' },
+    { role: 'user', content: 'What is the capital of France?' }
+  ],
+  json: true
 });
-
-// Generate images with AI
-const image = await websim.imageGen({
-  prompt: "A beautiful sunset over mountains",
-  aspect_ratio: "16:9"
-});</code></pre>
+const replyText = completion.content;</code></pre>
       </div>
+  
+      <!-- Image Generation API -->
+      <h3>Image Generation API</h3>
+      <div class="api-section">
+        <pre><code>// Generate an image
+const image = await websim.imageGen({
+  prompt: 'A beautiful sunset over mountains',
+  aspect_ratio: '16:9'
+});
+const imageUrl = image.url;</code></pre>
+      </div>
+  
+      <!-- WebsimSocket API (Realtime Multiplayer) -->
+      <h3>WebsimSocket API (Realtime Multiplayer)</h3>
+      <div class="api-section">
+        <pre><code>// Initialize connection
+const room = new WebsimSocket();
+await room.initialize();
+
+// Update your presence
+room.updatePresence({ x: 0, y: 0, status: 'ready' });
+
+// Subscribe to presence & room state
+room.subscribePresence(presence => console.log('Presence:', presence));
+room.subscribeRoomState(state => console.log('State:', state));
+
+// Send a custom event (no echo)
+room.send({ type: 'move', x: 10, y: 20, echo: false });</code></pre>
+      </div>
+  
+      <!-- Collection API (Persistent Data) -->
+      <h3>Collection API (Persistent Data)</h3>
+      <div class="api-section">
+        <pre><code>// Create & query records
+const post = await room.collection('post').create({
+  message: 'Hello, world!', timestamp: Date.now()
+});
+const posts = room.collection('post').getList();
+const filtered = room.collection('post').filter({ author: 'alice' }).getList();
+
+// Subscribe to changes
+room.collection('post').subscribe(posts => console.log('Updated posts:', posts));</code></pre>
+      </div>
+  
     </div>
   </div>
 

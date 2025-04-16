@@ -3,7 +3,7 @@
 // Global application state
 window.appState = {
   conversation: [],
-  currentAgent: 'product-owner',
+  currentAgent: 'project-manager',
   progress_value: 0,
   autoConversationTimeout: null,
   isAutoConversing: false,
