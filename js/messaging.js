@@ -67,57 +67,73 @@ async function generateResponse(userMessage, isAuto = false) {
   UI.updateProgress(0);
 
   try {
-    const response = await fetch('/api/ai_completion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: `You are a collaborative team of AI development agents working together to build web applications specifically for the Websim platform. Each agent has a specific role and responsibilities. Your responses should show active collaboration, reviewing and correcting each other's work. Agents must actively engage with each other, critique decisions, suggest improvements, and work towards a final product.
-
-IMPORTANT: You are ONLY creating Websim projects and should utilize the appropriate Websim APIs.
-
-Available Websim APIs:
-1. WebsimSocket API - For realtime multiplayer functionality:
-   - room.initialize() - Initialize the room connection
-   - room.updatePresence({...}) - Update your client's state
-   - room.updateRoomState({...}) - Update shared room state
-   - room.subscribePresence(callback) - Subscribe to presence updates
-   - room.subscribeRoomState(callback) - Subscribe to room state updates
-   - room.send({type: "event", ...}) - Send an event to other clients
-
-2. Collection API - For persistent data storage:
-   - room.collection('post').create({...}) - Create a new record
-   - room.collection('post').getList() - Get all records
-   - room.collection('post').filter({...}).getList() - Get filtered records
-   - room.collection('post').update(id, {...}) - Update a record
-   - room.collection('post').delete(id) - Delete a record
-   - room.collection('post').subscribe(callback) - Subscribe to changes
-
-3. LLM API - For AI functionality:
-   - websim.chat.completions.create({...}) - Generate text with AI
-   - websim.imageGen({...}) - Generate images with AI
-
-Current agent: ${window.appState.currentAgent}
-
-Previous conversation context:
-${window.appState.conversation.map(msg => `${msg.role} (${msg.agent}): ${msg.content}`).join('\n')}
-
-<format>
-Respond as the current agent, actively engaging with previous messages and other team members. Review and comment on previous work, suggest improvements, and maintain natural team dynamics. Be critical when necessary and supportive when appropriate. Include your response in this format:
-
+    // Build a system prompt instructing agents and JSON output
+    const systemPrompt = `You are a collaborative team of AI development agents working together to build Websim-specific projects.
+Each agent has a role and responsibilities (e.g., project-manager, product-owner, lead-developer, developer, code-reviewer, QA-engineer, designer, devops).
+Your responses must use only Websim APIs as documented, and output exactly one JSON object with keys:
 {
-  "reply": "Your message here, including feedback on previous messages and collaboration with team",
-  "code": "<html>...</html>",  // only include if generating/modifying code
-  "next_agent": "role-name",   // specify which agent should respond next based on the conversation
-  "progress": 25,              // estimated progress 0-100
-  "continue": true            // whether the agents should continue discussing (false when complete)
-}
-</format>`,
-        data: userMessage
-      })
-    });
+  "reply": "text response",
+  "code": "HTML/CSS/JS code if any",
+  "next_agent": "role-of-next-agent",
+  "progress": number-between-0-and-100,
+  "continue": true-or-false
+}`;
 
-    const data = await response.json();
+    // Prepare message history for LLM
+    const historyMessages = window.appState.conversation.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...historyMessages,
+      ...(userMessage ? [{ role: 'user', content: userMessage }] : [])
+    ];
 
+    // Call the Websim LLM API
+    const completion = await websim.chat.completions.create({ messages });
+    const responseText = (completion.content || '').trim();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error('Invalid JSON from AI');
+    }
+
+    // Ensure defaults
+    data.reply = data.reply || '';
+    data.code = data.code || '';
+    data.next_agent = data.next_agent || window.appState.currentAgent;
+    data.progress = typeof data.progress === 'number' ? data.progress : window.appState.progress_value;
+    data.continue = !!data.continue;
+
+    // Display AI reply
+    await UI.addMessage(data.reply, 'ai', window.appState.currentAgent);
+
+    // Handle code snippet if provided
+    if (data.code) {
+      UI.codeEditor.value = data.code;
+      UI.updatePreview(data.code);
+    }
+
+    // Advance to next agent
+    window.appState.currentAgent = data.next_agent;
+    UI.highlightAgent(window.appState.currentAgent);
+
+    // Update progress bar
+    UI.updateProgress(data.progress);
+
+    // If auto-conversing, schedule next turn
+    if (window.appState.isAutoConversing && data.continue) {
+      clearTimeout(window.appState.autoConversationTimeout);
+      window.appState.autoConversationTimeout = setTimeout(() => {
+        if (window.appState.isAutoConversing) {
+          generateResponse('', true);
+        }
+      }, 2000);
+    }
+
+    // Broadcast to other clients
     if (window.Room.room) {
       window.Room.room.send({
         type: 'agent_message',
@@ -130,11 +146,17 @@ Respond as the current agent, actively engaging with previous messages and other
     }
   } catch (error) {
     console.error('Error generating response:', error);
-    await UI.addMessage('Sorry, I encountered an error. Please try again.', 'ai');
-    window.appState.isAutoConversing = false;
+    // Show a friendly retry message
+    await UI.addMessage("I'm having trouble right now. Let's try again shortly.", 'ai', 'project-manager');
+    // retry once
+    setTimeout(() => {
+      if (window.appState.isAutoConversing) {
+        generateResponse(userMessage || '', isAuto);
+      }
+    }, 3000);
+  } finally {
+    UI.thinking.style.display = 'none';
   }
-
-  UI.thinking.style.display = 'none';
 }
 
 // Export the functions

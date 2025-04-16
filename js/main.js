@@ -77,6 +77,8 @@ window.onclick = function(event) {
 
 // Initialize the application
 (async function init() {
+  console.log('Initializing application...');
+  
   // Add initial welcome message about Websim projects
   const welcomeMessage = 
     "Welcome to the Websim Development Team! Our agents specialize in creating " +
@@ -85,8 +87,17 @@ window.onclick = function(event) {
   
   await UI.addMessage(welcomeMessage, 'ai', 'project-manager');
   
+  // Ensure UI elements are initialized
+  UI.highlightAgent(window.appState.currentAgent);
+  
   // Ensure room is initialized
-  if (window.Room && window.Room.room) {
+  if (window.Room) {
+    console.log('Initializing WebsimSocket room...');
     await window.Room.initializeRoom();
+    console.log('Room initialized successfully');
+  } else {
+    console.error('Room module not found');
   }
+  
+  console.log('Application initialized successfully');
 })();

@@ -30,7 +30,10 @@ function updateProgress(value) {
  * @param {string} role - Agent role
  */
 function highlightAgent(role) {
-  if (!role) return;
+  if (!role) {
+    console.warn('No role specified for highlighting agent');
+    return;
+  }
 
   const agents = document.querySelectorAll('.agent');
   agents.forEach(a => a.classList.remove('active'));
@@ -38,6 +41,8 @@ function highlightAgent(role) {
   const agent = document.querySelector(`[data-role="${role}"]`);
   if (agent) {
     agent.classList.add('active');
+  } else {
+    console.warn(`Agent with role "${role}" not found`);
   }
 }
 
