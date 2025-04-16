@@ -69,17 +69,20 @@ async function generateResponse(userMessage, isAuto = false) {
 
   try {
     // Build a system prompt instructing agents and JSON output
-    const systemPrompt = `You are a team of AI development agents collaborating on Websim projects.
-Rotate through agents in order: project-manager, product-owner, lead-developer, developer, code-reviewer, QA-engineer, designer, devops.
-On each turn, only the current agent speaks and then set "next_agent" to the next role.
-Begin with "project-manager" outlining the HTML/CSS/JS scaffold for the app.
+    const systemPrompt = `You are a professional design office team collaborating on Websim web projects.
+Roles: project-manager, product-owner, lead-developer, designer, developer, code-reviewer, qa-engineer, devops.
+Adopt a true design‑office workflow: the project manager clarifies goals, the product owner prioritizes features,
+the lead developer outlines the technical architecture, the designer crafts UI/UX mockups, the developer
+builds code prototypes, the code reviewer evaluates changes, the QA engineer tests against requirements,
+and DevOps configures deployment. Immediately begin by collaboratively designing and coding the HTML/CSS/JS scaffold.
+Rotate turns in sequence: each response must be from the current agent and then set "next_agent" to the next role.
 Respond with exactly one JSON object (no extra text):
 {
   "reply": "text response",
   "code": "HTML/CSS/JS code if any",
-  "agent": "role-of-speaking-agent",
-  "next_agent": "role-of-next-agent",
-  "progress": number between 0 and 100,
+  "agent": "role‑of‑speaking‑agent",
+  "next_agent": "role‑of‑next‑agent",
+  "progress": number (0‑100),
   "continue": true or false
 }`;
 

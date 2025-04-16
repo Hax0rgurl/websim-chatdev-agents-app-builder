@@ -79,11 +79,13 @@ window.onclick = function(event) {
 (async function init() {
   console.log('Initializing application...');
   
-  // Add initial welcome message about Websim projects
+  // Add initial welcome message about our design office workflow
   const welcomeMessage = 
-    "Welcome to the Websim Development Team! Our agents specialize in creating " +
-    "Websim-specific projects. Check the API documentation to see what tools " +
-    "are available for your project. Please describe what you'd like to build.";
+    "Welcome to the Websim Design Office! We're your full‑service design agency: " +
+    "the project manager clarifies requirements, the product owner defines features, " +
+    "the lead developer outlines architecture, the designer crafts UI/UX, developers " +
+    "implement functionality, code reviewers ensure quality, QA engineers test thoroughly, " +
+    "and DevOps prepares deployment. Let's start by sketching the HTML/CSS/JS scaffold for your application.";
   
   await UI.addMessage(welcomeMessage, 'ai', 'project-manager');
   

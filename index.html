@@ -186,65 +186,63 @@
   <div id="apiDocsModal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
-      <h2>Websim API Documentation</h2>
-      
-      <!-- LLM API -->
-      <h3>LLM API</h3>
+      <h2>Websim Design Office Developer API</h2>
+
+      <h3>LLM Chat API</h3>
       <div class="api-section">
-        <pre><code>// Generate text with AI
-const completion = await websim.chat.completions.create({
-  messages: [
-    { role: 'system', content: 'You are a helpful assistant.' },
-    { role: 'user', content: 'What is the capital of France?' }
-  ],
+        <pre><code>// Chat completions with JSON output
+const messages = [
+  { role: 'system', content: 'You are a professional design office team collaborating on Websim web projects.' },
+  { role: 'user', content: 'Outline the UI layout' }
+];
+const aiResponse = await websim.chat.completions.create({
+  messages,
   json: true
 });
-const replyText = completion.content;</code></pre>
+console.log(aiResponse.content);</code></pre>
       </div>
-  
-      <!-- Image Generation API -->
+
       <h3>Image Generation API</h3>
       <div class="api-section">
-        <pre><code>// Generate an image
+        <pre><code>// Generate design mockup
 const image = await websim.imageGen({
-  prompt: 'A beautiful sunset over mountains',
+  prompt: 'Modern dashboard wireframe, light theme',
   aspect_ratio: '16:9'
 });
-const imageUrl = image.url;</code></pre>
+console.log(image.url);</code></pre>
       </div>
-  
-      <!-- WebsimSocket API (Realtime Multiplayer) -->
-      <h3>WebsimSocket API (Realtime Multiplayer)</h3>
+
+      <h3>WebsimSocket Real‑time Collaboration</h3>
       <div class="api-section">
-        <pre><code>// Initialize connection
+        <pre><code>// Initialize collaborative session
 const room = new WebsimSocket();
 await room.initialize();
 
-// Update your presence
-room.updatePresence({ x: 0, y: 0, status: 'ready' });
+// Update presence/status
+room.updatePresence({ status: 'design_in_progress' });
 
-// Subscribe to presence & room state
-room.subscribePresence(presence => console.log('Presence:', presence));
+// Subscribe to shared state
 room.subscribeRoomState(state => console.log('State:', state));
+room.subscribePresence(presence => console.log('Presence:', presence));
 
-// Send a custom event (no echo)
-room.send({ type: 'move', x: 10, y: 20, echo: false });</code></pre>
+// Broadcast a custom event
+room.send({
+  type: 'design_update',
+  details: 'Added header component',
+  echo: false
+});</code></pre>
       </div>
-  
-      <!-- Collection API (Persistent Data) -->
-      <h3>Collection API (Persistent Data)</h3>
+
+      <h3>Collection API (Persistent Records)</h3>
       <div class="api-section">
-        <pre><code>// Create & query records
-const post = await room.collection('post').create({
-  message: 'Hello, world!', timestamp: Date.now()
+        <pre><code>// Save and list design records
+const record = await room.collection('design').create({
+  name: 'Homepage Wireframe',
+  status: 'draft'
 });
-const posts = room.collection('post').getList();
-const filtered = room.collection('post').filter({ author: 'alice' }).getList();
-
-// Subscribe to changes
-room.collection('post').subscribe(posts => console.log('Updated posts:', posts));</code></pre>
+const designs = room.collection('design').getList();
+console.log(designs);</code></pre>
       </div>
-  
     </div>
   </div>
 
