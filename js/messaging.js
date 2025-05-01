@@ -56,6 +56,31 @@ function handleMessage(event) {
   }
 }
 
+// Helper to load API docs text for system prompt
+let apiDocsCache = null;
+async function getApiDocsText() {
+  if (apiDocsCache) return apiDocsCache;
+  // Try reading from the currently loaded modal
+  const el = document.getElementById('apiDocsContent');
+  if (el) {
+    apiDocsCache = el.innerText;
+    return apiDocsCache;
+  }
+  // Fallback: fetch the modal HTML and extract the docs section
+  try {
+    const res = await fetch('html/api-docs-modal.html');
+    const html = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const contentEl = doc.getElementById('apiDocsContent');
+    apiDocsCache = contentEl ? contentEl.innerText : '';
+  } catch (e) {
+    console.error('Failed to load API docs:', e);
+    apiDocsCache = '';
+  }
+  return apiDocsCache;
+}
+
 /**
  * Generate a response from AI
  * @param {string} userMessage - User message
@@ -72,9 +97,8 @@ async function generateResponse(userMessage, isAuto = false) {
       throw new Error("Websim API not available. Please ensure you're running in the Websim environment.");
     }
 
-    // Get API documentation content
-    const apiDocsElement = document.getElementById('apiDocsContent');
-    const apiDocsText = apiDocsElement ? apiDocsElement.innerText : 'API Documentation not available.';
+    // Load API documentation content for system prompt
+    const apiDocsText = await getApiDocsText();
 
     // Build a system prompt instructing agents and JSON output
     const systemPrompt = `You are a collaborative team of AI development agents working together to build Websim-specific projects.
