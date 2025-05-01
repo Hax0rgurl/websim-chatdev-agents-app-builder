@@ -1,458 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="https://websim.ai/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <div class="container">
-    <div class="grid">
-      <div class="sidebar">
-        <h1>Development Team</h1>
-        <div class="agent" data-role="project-manager">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#64B5F6"/>
-              <circle cx="25" cy="18" r="8" fill="#90CAF9"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#64B5F6"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#90CAF9"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,24 25,24 27,24 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Sarah Chen</div>
-            <div class="agent-role">Project Manager</div>
-          </div>
+  <div class="app-layout">
+    <div id="sidebar-container"></div>
+    
+    <div class="main-area">
+      <div class="chat-panel">
+        <div class="panel-header">
+          <h2>Team Chat</h2>
         </div>
-        <div class="agent" data-role="product-owner">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#4DB6AC"/>
-              <circle cx="25" cy="18" r="8" fill="#80CBC4"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#4DB6AC"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#80CBC4"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,25 25,24 27,23 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Michael Rodriguez</div>
-            <div class="agent-role">Product Owner</div>
-          </div>
+        <div class="chat-scroll-area">
+          <div id="chat"></div>
         </div>
-        <div class="agent" data-role="lead-developer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#7986CB"/>
-              <circle cx="25" cy="18" r="8" fill="#9FA8DA"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#7986CB"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#9FA8DA"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M20,22 C20,22 22,24 25,24 28,24 30,22 30,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
+        
+        <div class="input-area">
+          <div class="status-bar">
+            <div class="thinking">Team is collaborating<span class="thinking-dots"></span></div>
+            <div class="progress-bar"><div class="progress"></div></div>
           </div>
-          <div class="agent-info">
-            <div class="agent-name">James Wilson</div>
-            <div class="agent-role">Lead Developer</div>
+          <div class="input-wrapper">
+            <textarea id="prompt" rows="1" placeholder="Describe what to build..."></textarea>
+            <button id="generateBtn" title="Send Message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
           </div>
-        </div>
-        <div class="agent" data-role="developer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#FFB74D"/>
-              <circle cx="25" cy="18" r="8" fill="#FFCC80"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#FFB74D"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#FFCC80"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,23 C21,23 23,21 25,21 27,21 29,23 29,23" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Emily Zhang</div>
-            <div class="agent-role">Developer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="code-reviewer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#9575CD"/>
-              <circle cx="25" cy="18" r="8" fill="#B39DDB"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#9575CD"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#B39DDB"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M20,22 C20,22 23,26 25,26 27,26 30,22 30,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">David Kumar</div>
-            <div class="agent-role">Code Reviewer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="qa-engineer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#F06292"/>
-              <circle cx="25" cy="18" r="8" fill="#F48FB1"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#F06292"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#F48FB1"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,24 25,24 27,24 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Lisa Patel</div>
-            <div class="agent-role">QA Engineer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="designer">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#4FC3F7"/>
-              <circle cx="25" cy="18" r="8" fill="#81D4FA"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#4FC3F7"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#81D4FA"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M21,22 C21,22 23,26 25,24 27,22 29,22 29,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Alex Morgan</div>
-            <div class="agent-role">UX/UI Designer</div>
-          </div>
-        </div>
-        <div class="agent" data-role="devops">
-          <div class="agent-avatar">
-            <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="25" cy="18" r="10" fill="#81C784"/>
-              <circle cx="25" cy="18" r="8" fill="#A5D6A7"/>
-              <path d="M10,45 V38 C10,32 16,28 25,28 34,28 40,32 40,38 V45 Z" fill="#81C784"/>
-              <path d="M25,28 C34,28 38,32 38,38 V42 H12 V38 C12,32 16,28 25,28 Z" fill="#A5D6A7"/>
-              <circle cx="19" cy="16" r="2" fill="#29434E"/>
-              <circle cx="31" cy="16" r="2" fill="#29434E"/>
-              <path d="M20,22 C20,22 23,24 25,24 27,24 30,22 30,22" stroke="#29434E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div class="agent-info">
-            <div class="agent-name">Sam Taylor</div>
-            <div class="agent-role">DevOps Engineer</div>
-          </div>
-        </div>
-        <div class="api-docs-toggle">
-          <button id="toggleApiDocs">Show API Documentation</button>
         </div>
       </div>
-      <div class="main-content">
-        <div id="chat"></div>
-        <div class="thinking">Team is collaborating<span class="thinking-dots"></span></div>
-        <div class="progress-bar">
-          <div class="progress"></div>
-        </div>
-        <textarea id="prompt" rows="3" placeholder="Describe what you'd like to build..."></textarea>
-        <button id="generateBtn">Send Message</button>
-        <div id="workspace">
-          <div class="code-controls">
-            <button id="proposeBtn">Propose Changes</button>
-            <button id="viewHistoryBtn">View History</button>
-          </div>
-          <div class="vote-panel">
-            <h3>Proposed Changes</h3>
-            <div class="code-diff"></div>
-            <div class="vote-buttons">
-              <button class="vote-btn approve-btn">Approve</button>
-              <button class="vote-btn reject-btn">Reject</button>
-            </div>
-          </div>
-          <div class="code-history"></div>
-          <textarea id="code-editor" placeholder="Code will appear here for testing..."></textarea>
-          <iframe id="preview"></iframe>
-        </div>
-      </div>
+      
+      <div id="workspace-container"></div>
     </div>
   </div>
 
-  <!-- API Documentation Modal -->
-  <div id="apiDocsModal" class="modal">
-    <div class="modal-content">
-      <span class="close-modal">&times;</span>
-      <h2>Websim API Documentation</h2>
-      <div id="apiDocsContent">
-        <h3>WebsimSocket API - Realtime Multiplayer</h3>
-        <div class="api-section">
-          <h4>Initialization & Setup</h4>
-          <pre><code>// Available globally, no import needed
-const room = new WebsimSocket(); 
-
-// Call this once to connect and load initial state
-await room.initialize();</code></pre>
-
-          <h4>Presence (Per-Client State)</h4>
-          <pre><code>// Get all presence data (read-only)
-// Automatically updated after initialize()
-const allPresence = room.presence; 
-// { clientId1: { x: 10, y: 20, ... }, clientId2: { ... } }
-
-// Get your client ID
-const myId = room.clientId; 
-
-// Get info about connected peers (including yourself)
-// Automatically updated after initialize()
-const peers = room.peers;
-// { clientId1: { username: "...", avatarUrl: "..." }, ... }
-const myInfo = room.peers[room.clientId];
-
-// Update your own presence state
-room.updatePresence({
-  x: 100,
-  y: 200,
-  health: 95,
-  // any key: value pairs
-});
-
-// Subscribe to presence changes
-const unsubscribePresence = room.subscribePresence((currentPresence) => {
-  // This callback triggers when any client's presence changes.
-  // Note: room.presence is already updated before this callback.
-  console.log("Presence updated:", currentPresence);
-  // Update your UI based on new presence data
-});
-// Call unsubscribePresence() to stop listening
-
-// Request another client to update their presence
-room.requestPresenceUpdate('client-id-to-update', {
-  type: 'damage', // Custom data for the request
-  amount: 10 
-});
-
-// Handle presence update requests from others
-const unsubscribeRequests = room.subscribePresenceUpdateRequests((updateRequest, fromClientId) => {
-  const myCurrentPresence = room.presence[room.clientId];
-  if (updateRequest.type === 'damage') {
-    room.updatePresence({
-      ...myCurrentPresence,
-      health: myCurrentPresence.health - updateRequest.amount
-    });
-  }
-});
-// Call unsubscribeRequests() to stop listening</code></pre>
-
-          <h4>Room State (Shared Game/App State)</h4>
-          <pre><code>// Get the current room state (read-only)
-// Automatically updated after initialize()
-const currentRoomState = room.roomState; 
-// { score: { teamA: 5, teamB: 3 }, items: { "item1": { x: 1, y: 1 } } }
-
-// Update the room state (merges with existing state)
-room.updateRoomState({
-  score: { teamA: 6 }, // Updates teamA score
-  items: { 
-    "item1": { x: 2, y: 2 }, // Moves item1
-    "item2": { x: 5, y: 5 }  // Adds item2
-  } 
-});
-
-// To remove a key, set it to null
-room.updateRoomState({
-  items: { "item1": null } // Removes item1
-});
-
-// Subscribe to room state changes
-const unsubscribeRoomState = room.subscribeRoomState((currentState) => {
-  // This callback triggers when room state changes.
-  // Note: room.roomState is already updated before this callback.
-  console.log("Room state updated:", currentState);
-  // Update your UI based on the new state
-});
-// Call unsubscribeRoomState() to stop listening</code></pre>
-
-          <h4>Events (Ephemeral Broadcasts)</h4>
-          <pre><code>// Send an event to other clients
-room.send({
-  type: "chat_message", // Custom event type
-  message: "Hello!",
-  echo: true // (Optional) false if sender shouldn't receive it
-});
-
-// Listen for incoming events
-room.onmessage = (event) => {
-  const data = event.data; // { type: "...", ..., clientId: "...", username: "..." }
-  switch (data.type) {
-    case 'connected':
-      console.log(`Client connected: ${data.username} (${data.clientId})`);
-      break;
-    case 'disconnected':
-      console.log(`Client disconnected: ${data.username} (${data.clientId})`);
-      break;
-    case 'chat_message':
-      console.log(`${data.username}: ${data.message}`);
-      break;
-    // Handle other custom events
-  }
-};</code></pre>
-        </div>
-
-        <h3>Collection API - Persistent Data Storage</h3>
-        <div class="api-section">
-          <pre><code>// Access a collection (e.g., 'posts')
-const postsCollection = room.collection('posts'); 
-// IMPORTANT: If you change the data structure, use versioning: 
-// room.collection('posts_v2')
-
-// Create a new record (returns the created record with id, username, created_at)
-let newPost = await postsCollection.create({
-  message: "Hello, persistent world!",
-  likes: 0
-});
-// newPost = { id: "...", type: "posts", username: "...", created_at: "...", message: "...", likes: 0 }
-
-// Get a list of records (returns array, newest first)
-let allPosts = postsCollection.getList(); 
-// Note: May be empty initially while loading. Best to use subscribe.
-// Reverse if you want oldest first: allPosts.reverse()
-
-// Filter records (only equality checks)
-let myPosts = postsCollection.filter({ username: room.peers[room.clientId]?.username }).getList();
-let topLevelPosts = postsCollection.filter({ parentId: null }).getList(); // Example parent/child
-
-// Update a record (only your own records)
-await postsCollection.update(newPost.id, {
-  message: "Updated message",
-  likes: 1 // Update specific fields
-});
-
-// Delete a record (only your own records)
-await postsCollection.delete(newPost.id);
-
-// Subscribe to changes in a list (triggers immediately & on updates)
-const unsubscribePosts = postsCollection.subscribe(function (updatedPosts) {
-  console.log("Posts list updated:", updatedPosts);
-  // Update your UI
-});
-// Call unsubscribePosts() to stop listening
-
-// Filter then subscribe
-const unsubscribeMyPosts = postsCollection.filter({ username: room.peers[room.clientId]?.username })
-  .subscribe(function (myUpdatedPosts) {
-    console.log("My posts updated:", myUpdatedPosts);
-  });</code></pre>
-        </div>
-
-        <h3>LLM API - AI Functionality</h3>
-        <div class="api-section">
-          <h4>AI Chat Completion</h4>
-          <pre><code>// Simple text generation
-let conversationHistory = [
-  { role: "system", content: "You are a helpful pirate assistant." },
-  { role: "user", content: "What be the weather today?" }
-];
-const completion = await websim.chat.completions.create({
-  messages: conversationHistory
-});
-const aiResponse = completion.content; // The AI's text response
-// completion object also has role: 'assistant', content: ...
-
-// Getting JSON output
-const jsonCompletion = await websim.chat.completions.create({
-  messages: [
-    { role: "system", content: "Extract name and age. Respond with JSON: { name: string, age: number }" },
-    { role: "user", content: "My name is Bob, I'm 30." }
-  ],
-  json: true // Request JSON output
-});
-const jsonData = JSON.parse(jsonCompletion.content); 
-// jsonData = { name: "Bob", age: 30 }
-
-// Image input (using a URL from upload, generation, or external source)
-const imageAnalysis = await websim.chat.completions.create({
-  messages: [
-    { role: "user", content: [
-        { type: "text", text: "Is this a cat? Respond JSON { isCat: boolean }" },
-        { type: "image_url", image_url: { url: imageDataUrl } } // imageDataUrl from file upload, AI generation, or any public URL
-      ] 
-    }
-  ],
-  json: true
-});
-const analysisResult = JSON.parse(imageAnalysis.content);</code></pre>
-
-          <h4>AI Image Generation</h4>
-          <pre><code>// Generate an image
-const imageResult = await websim.imageGen({
-  prompt: "A futuristic cityscape at sunset",
-  aspect_ratio: "16:9" // Optional: "1:1", "9:16", "2:3", "3:2", etc.
-  // or specify width: 1024, height: 576
-  // seed: 123 // Optional: for reproducible results/variations
-});
-const imageUrl = imageResult.url; // URL of the generated image
-
-// Display the image: &lt;img src={imageUrl} /&gt;</code></pre>
-
-          <h4>Text to Speech</h4>
-          <pre><code>// Generate audio from text
-const ttsResult = await websim.textToSpeech({
-  text: "Hello, world! This is your captain speaking.",
-  voice: "en-male" // e.g., "en-female", "es-male", "fr-female", etc. 
-                  // Supported languages: en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, hu, ko, hi
-                  // Supported genders: male, female
-});
-const audioUrl = ttsResult.url; // URL to the .wav audio file
-
-// Play the audio: &lt;audio controls src={audioUrl}&gt;&lt;/audio&gt;</code></pre>
-        </div>
-
-        <h3>File Upload API</h3>
-        <div class="api-section">
-          <pre><code>// &lt;input type="file" id="fileInput"&gt;
-const fileInput = document.getElementById('fileInput');
-const file = fileInput.files[0];
-
-if (file) {
-  try {
-    const uploadedUrl = await websim.upload(file);
-    console.log("File uploaded successfully:", uploadedUrl);
-    // Use uploadedUrl (e.g., in an &lt;img&gt; tag or with LLM image input)
-  } catch (error) {
-    console.error("Upload failed:", error);
-  }
-}</code></pre>
-        </div>
-
-        <h3>Utility Functions</h3>
-        <div class="api-section">
-          <pre><code>// Get current project info
-const project = await window.websim.getCurrentProject();
-// project = { id: "...", title: "...", description: "..." }
-
-// Get project creator info
-const creator = await window.websim.getCreatedBy();
-// creator = { id: "...", username: "...", avatar_url: "..." }
-
-// Get current user info (if logged in)
-const currentUser = await window.websim.getUser(); 
-// currentUser = { id: "...", username: "...", avatar_url: "..." } or null
-
-// Base URL for relative linking (useful for sharing)
-const baseUrl = window.baseUrl; // e.g., "https://websim.ai/p/projectId"
-</code></pre>
-        </div>
-      </div> 
-    </div>
-  </div>
+  <div id="modals-container"></div>
 
   <!-- Script imports -->
+  <script src="js/components.js"></script>
   <script src="js/room.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/messaging.js"></script>
+  <script src="js/templates.js"></script>
   <script src="js/codeVersion.js"></script>
   <script src="js/main.js"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
