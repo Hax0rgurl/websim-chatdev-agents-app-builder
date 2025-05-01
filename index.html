@@ -177,7 +177,6 @@
           <textarea id="code-editor" placeholder="Code will appear here for testing..."></textarea>
           <iframe id="preview"></iframe>
         </div>
-        <div id="agentLog" class="agent-log"></div>
       </div>
     </div>
   </div>
@@ -186,68 +185,111 @@
   <div id="apiDocsModal" class="modal">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
-      <h2>Websim Design Office Developer API</h2>
-
-      <h3>LLM Chat API</h3>
+      <h2>Websim API Documentation</h2>
+      
+      <h3>WebsimSocket API - For Realtime Multiplayer</h3>
       <div class="api-section">
-        <pre><code>// Chat completions with JSON output
-const messages = [
-  { role: 'system', content: 'You are a professional design office team collaborating on Websim web projects.' },
-  { role: 'user', content: 'Outline the UI layout' }
-];
-const aiResponse = await websim.chat.completions.create({
-  messages,
-  json: true
-});
-console.log(aiResponse.content);</code></pre>
-      </div>
-
-      <h3>Image Generation API</h3>
-      <div class="api-section">
-        <pre><code>// Generate design mockup
-const image = await websim.imageGen({
-  prompt: 'Modern dashboard wireframe, light theme',
-  aspect_ratio: '16:9'
-});
-console.log(image.url);</code></pre>
-      </div>
-
-      <h3>WebsimSocket Real‑time Collaboration</h3>
-      <div class="api-section">
-        <pre><code>// Initialize collaborative session
+        <pre><code>// Initialize the room connection
 const room = new WebsimSocket();
 await room.initialize();
 
-// Update presence/status
-room.updatePresence({ status: 'design_in_progress' });
+// Update your client's presence
+room.updatePresence({
+  x: 100, 
+  y: 200,
+  username: "player1"
+});
 
-// Subscribe to shared state
-room.subscribeRoomState(state => console.log('State:', state));
-room.subscribePresence(presence => console.log('Presence:', presence));
+// Update shared room state 
+room.updateRoomState({
+  gameState: "started",
+  score: {
+    team1: 5,
+    team2: 3
+  }
+});
 
-// Broadcast a custom event
+// Subscribe to presence updates
+room.subscribePresence((allPresence) => {
+  console.log("Players:", allPresence);
+});
+
+// Subscribe to room state updates
+room.subscribeRoomState((state) => {
+  console.log("Game state:", state);
+});
+
+// Send events to other clients
 room.send({
-  type: 'design_update',
-  details: 'Added header component',
-  echo: false
+  type: "move",
+  x: 50,
+  y: 75
+});
+
+// Listen for events from other clients
+room.onmessage = (event) => {
+  if (event.data.type === "move") {
+    movePiece(event.data.x, event.data.y);
+  }
+};</code></pre>
+      </div>
+      
+      <h3>Collection API - For Persistent Data</h3>
+      <div class="api-section">
+        <pre><code>// Create a new record
+const post = await room.collection('post').create({
+  message: "Hello world!",
+  timestamp: Date.now()
+});
+
+// Get all records
+const posts = room.collection('post').getList();
+
+// Get filtered records
+const userPosts = room.collection('post')
+  .filter({ author: "username" })
+  .getList();
+
+// Update a record
+await room.collection('post').update(post.id, {
+  message: "Updated message"
+});
+
+// Delete a record
+await room.collection('post').delete(post.id);
+
+// Subscribe to changes
+room.collection('post').subscribe((posts) => {
+  console.log("Posts updated:", posts);
 });</code></pre>
       </div>
-
-      <h3>Collection API (Persistent Records)</h3>
+      
+      <h3>LLM API - For AI Functionality</h3>
       <div class="api-section">
-        <pre><code>// Save and list design records
-const record = await room.collection('design').create({
-  name: 'Homepage Wireframe',
-  status: 'draft'
+        <pre><code>// Generate text with AI
+const completion = await websim.chat.completions.create({
+  messages: [
+    {
+      role: "system",
+      content: "You are a helpful assistant."
+    },
+    {
+      role: "user",
+      content: "What is the capital of France?"
+    }
+  ]
 });
-const designs = room.collection('design').getList();
-console.log(designs);</code></pre>
+
+// Generate images with AI
+const image = await websim.imageGen({
+  prompt: "A beautiful sunset over mountains",
+  aspect_ratio: "16:9"
+});</code></pre>
       </div>
     </div>
   </div>
 
   <!-- Script imports -->
-  <script src="js/logger.js"></script>
   <script src="js/room.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/messaging.js"></script>

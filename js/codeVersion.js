@@ -3,31 +3,64 @@
 /**
  * Propose changes to the code
  */
-function proposeChanges() {
-  window.Logger.log('CodeVersion.proposeChanges', { agent: window.appState.currentAgent, code: window.UI.codeEditor.value });
+async function proposeChanges() {
   const currentCode = window.UI.codeEditor.value;
-  if (!currentCode.trim()) return;
+  if (!currentCode.trim()) {
+      alert("Cannot propose empty code.");
+      return;
+  }
 
-  const lastCode = window.appState.codeHistory.length > 0 
-    ? window.appState.codeHistory[window.appState.codeHistory.length - 1].code 
+  // Prevent proposing if changes are already pending
+  if (window.appState.pendingChanges) {
+    alert("There are already changes pending review. Please vote on them first.");
+    return;
+  }
+
+  const lastCode = window.appState.codeHistory.length > 0
+    ? window.appState.codeHistory[window.appState.codeHistory.length - 1].code
     : '';
+
+  // Optional: Add check to prevent proposing identical code
+  if (currentCode === lastCode) {
+      alert("No changes detected from the last accepted version.");
+      return;
+  }
+
+  // Use clientId for proposer identification
+  const proposerClientId = window.Room.room?.clientId;
+  if (!proposerClientId) {
+      console.error("Cannot propose changes: Client ID not available.");
+      alert("Error: Could not identify proposer. Please ensure you are connected.");
+      return;
+  }
+  const proposerUsername = window.Room.room?.peers[proposerClientId]?.username || 'Unknown User';
 
   window.appState.pendingChanges = {
     code: currentCode,
-    proposedBy: window.appState.currentAgent,
+    proposedBy: proposerUsername, // Store username for display
+    proposerClientId: proposerClientId, // Store clientId for internal logic if needed
     timestamp: Date.now()
   };
+  window.appState.votes = {}; // Reset votes for the new proposal
 
   const votePanel = document.querySelector('.vote-panel');
   const diffPanel = document.querySelector('.code-diff');
   diffPanel.innerHTML = generateDiff(lastCode, currentCode);
   votePanel.classList.add('active');
+  updateVotingStatus(); // Update status immediately
 
+  // Broadcast the proposal via room state update for persistence
   if (window.Room.room) {
-    window.Room.room.send({
-      type: 'propose_changes',
-      changes: window.appState.pendingChanges
-    });
+     console.log('Proposing changes and updating code state.'); // Debug log
+     // Update the shared state with the new proposal and cleared votes
+     await window.Room.updateCodeState();
+     // No need for a separate 'propose_changes' event if using roomState
+  } else {
+     console.error("Cannot propose changes: Room not available.");
+     // Rollback local state change if broadcast fails?
+     window.appState.pendingChanges = null;
+     votePanel.classList.remove('active');
+     alert("Error: Could not send proposal to other users.");
   }
 }
 
@@ -47,7 +80,6 @@ function generateDiff(oldCode, newCode) {
  * @param {boolean} approved - Is approved
  */
 function vote(approved) {
-  window.Logger.log('CodeVersion.vote', { approved });
   if (!window.appState.pendingChanges || !window.Room.room) return;
 
   const username = window.Room.room.clientId;
@@ -82,8 +114,6 @@ function checkVotes() {
     ? window.appState.codeHistory[window.appState.codeHistory.length - 1].code 
     : '';
   const isDeletion = window.appState.pendingChanges && lastCode && window.appState.pendingChanges.code.length < lastCode.length * 0.5;
-
-  window.Logger.log('CodeVersion.checkVotes', { votes: window.appState.votes, agents: Object.keys(window.Room.room?.peers||{}).length, approvals: Object.values(window.appState.votes).filter(v=>v).length, rejections: Object.values(window.appState.votes).filter(v=>!v).length, isDeletion: (window.appState.pendingChanges?.code.length < ((window.appState.codeHistory.slice(-1)[0]?.code.length||0)*0.5)) });
 
   if (isDeletion) {
     // Major deletions require unanimous approval
@@ -125,7 +155,6 @@ function updateVotingStatus() {
  * Accept pending changes
  */
 function acceptChanges() {
-  window.Logger.log('CodeVersion.acceptChanges', window.appState.pendingChanges);
   if (!window.appState.pendingChanges) return;
 
   window.appState.codeHistory.push(window.appState.pendingChanges);
@@ -141,7 +170,6 @@ function acceptChanges() {
  * Reject pending changes
  */
 function rejectChanges() {
-  window.Logger.log('CodeVersion.rejectChanges', window.appState.pendingChanges);
   window.appState.pendingChanges = null;
   window.appState.votes = {};
   document.querySelector('.vote-panel').classList.remove('active');
@@ -156,7 +184,6 @@ function rejectChanges() {
  * Update the code history display
  */
 function updateCodeHistory() {
-  window.Logger.log('CodeVersion.updateCodeHistory', window.appState.codeHistory);
   const historyDiv = document.querySelector('.code-history');
   historyDiv.innerHTML = window.appState.codeHistory.map((revision, i) => 
     `<div class="revision" data-index="${i}">Revision ${i+1} by ${revision.proposedBy} (${new Date(revision.timestamp).toLocaleString()})</div>`
