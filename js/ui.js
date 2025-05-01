@@ -76,61 +76,62 @@ function getAgentAvatar(role) {
 /**
  * Add message to the chat
  * @param {string} text - Message text
- * @param {string} sender - Sender (user or ai)
- * @param {string} agentRole - Agent role
- * @returns {Promise<void>}
+ * @param {string} sender - Sender ('user' or 'ai')
+ * @param {string | null} agentRole - Agent role if sender is 'ai'
+ * @returns {Promise<void>} - Returns void, but marked async for potential future use
  */
 async function addMessage(text, sender = 'user', agentRole = null) {
   if (!text) return;
 
   const p = document.createElement('p');
-  p.className = sender;
+  p.className = sender; // 'user' or 'ai'
 
+  // Add agent tag only if sender is 'ai' and role is provided
   if (sender === 'ai' && agentRole) {
     const agentTag = document.createElement('div');
     agentTag.className = 'agent-tag';
-    
+
     // Add avatar mini version
     const avatarMini = document.createElement('div');
-    avatarMini.className = 'agent-avatar-mini';
+    // Use a class for styling the mini avatar
+    avatarMini.className = 'agent-avatar-mini'; 
     avatarMini.innerHTML = getAgentAvatar(agentRole);
     agentTag.appendChild(avatarMini);
-    
+
     const agentName = document.createElement('span');
     agentName.textContent = getAgentName(agentRole);
     agentTag.appendChild(agentName);
-    
+
     p.appendChild(agentTag);
+  } else if (sender === 'user') {
+     // Optionally add a "User" tag or avatar for user messages
+     // For consistency, let's add a simple tag
+     const userTag = document.createElement('div');
+     userTag.className = 'user-tag'; // Add CSS for this
+     userTag.textContent = 'You';
+     p.appendChild(userTag);
   }
 
+
   const messageText = document.createElement('div');
+  // Basic sanitization or markdown rendering could happen here
   messageText.textContent = text;
   p.appendChild(messageText);
 
+  // Append the complete message block to chat
   chat.appendChild(p);
+  // Ensure chat scrolls to the bottom
   chat.scrollTop = chat.scrollHeight;
 
-  window.appState.conversation.push({
-    role: sender === 'user' ? 'user' : 'assistant',
-    content: text,
-    agent: sender === 'user' ? 'user' : agentRole
-  });
+  // *** Defer state update to avoid duplicate entries ***
+  // The state update (window.appState.conversation.push) should happen
+  // *before* calling addMessage or be handled centrally where the message
+  // originates (like in generateResponse or the user input handler)
+  // to prevent double-adding when receiving messages via WebsimSocket.
 
-  if (sender === 'user' && window.Room.room) {
-    try {
-      window.Room.room.send({
-        type: 'user_message',
-        message: text,
-        conversation: window.appState.conversation
-      });
-    } catch (error) {
-      console.error('Error sending user message:', error);
-    }
-  }
-
-  if (window.Room.room) {
-    await window.Room.updateProjectState();
-  }
+  // Removed state update and broadcast from here.
+  // It's now handled in the calling functions (generateResponse, main.js listener)
+  // and synchronized via Room.updateProjectState()
 }
 
 /**

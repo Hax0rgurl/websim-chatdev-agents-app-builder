@@ -3,64 +3,30 @@
 /**
  * Propose changes to the code
  */
-async function proposeChanges() {
+function proposeChanges() {
   const currentCode = window.UI.codeEditor.value;
-  if (!currentCode.trim()) {
-      alert("Cannot propose empty code.");
-      return;
-  }
+  if (!currentCode.trim()) return;
 
-  // Prevent proposing if changes are already pending
-  if (window.appState.pendingChanges) {
-    alert("There are already changes pending review. Please vote on them first.");
-    return;
-  }
-
-  const lastCode = window.appState.codeHistory.length > 0
-    ? window.appState.codeHistory[window.appState.codeHistory.length - 1].code
+  const lastCode = window.appState.codeHistory.length > 0 
+    ? window.appState.codeHistory[window.appState.codeHistory.length - 1].code 
     : '';
-
-  // Optional: Add check to prevent proposing identical code
-  if (currentCode === lastCode) {
-      alert("No changes detected from the last accepted version.");
-      return;
-  }
-
-  // Use clientId for proposer identification
-  const proposerClientId = window.Room.room?.clientId;
-  if (!proposerClientId) {
-      console.error("Cannot propose changes: Client ID not available.");
-      alert("Error: Could not identify proposer. Please ensure you are connected.");
-      return;
-  }
-  const proposerUsername = window.Room.room?.peers[proposerClientId]?.username || 'Unknown User';
 
   window.appState.pendingChanges = {
     code: currentCode,
-    proposedBy: proposerUsername, // Store username for display
-    proposerClientId: proposerClientId, // Store clientId for internal logic if needed
+    proposedBy: window.appState.currentAgent,
     timestamp: Date.now()
   };
-  window.appState.votes = {}; // Reset votes for the new proposal
 
   const votePanel = document.querySelector('.vote-panel');
   const diffPanel = document.querySelector('.code-diff');
   diffPanel.innerHTML = generateDiff(lastCode, currentCode);
   votePanel.classList.add('active');
-  updateVotingStatus(); // Update status immediately
 
-  // Broadcast the proposal via room state update for persistence
   if (window.Room.room) {
-     console.log('Proposing changes and updating code state.'); // Debug log
-     // Update the shared state with the new proposal and cleared votes
-     await window.Room.updateCodeState();
-     // No need for a separate 'propose_changes' event if using roomState
-  } else {
-     console.error("Cannot propose changes: Room not available.");
-     // Rollback local state change if broadcast fails?
-     window.appState.pendingChanges = null;
-     votePanel.classList.remove('active');
-     alert("Error: Could not send proposal to other users.");
+    window.Room.room.send({
+      type: 'propose_changes',
+      changes: window.appState.pendingChanges
+    });
   }
 }
 

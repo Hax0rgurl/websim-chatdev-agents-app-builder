@@ -186,106 +186,264 @@
     <div class="modal-content">
       <span class="close-modal">&times;</span>
       <h2>Websim API Documentation</h2>
-      
-      <h3>WebsimSocket API - For Realtime Multiplayer</h3>
-      <div class="api-section">
-        <pre><code>// Initialize the room connection
-const room = new WebsimSocket();
-await room.initialize();
+      <div id="apiDocsContent">
+        <h3>WebsimSocket API - Realtime Multiplayer</h3>
+        <div class="api-section">
+          <h4>Initialization & Setup</h4>
+          <pre><code>// Available globally, no import needed
+const room = new WebsimSocket(); 
 
-// Update your client's presence
+// Call this once to connect and load initial state
+await room.initialize();</code></pre>
+
+          <h4>Presence (Per-Client State)</h4>
+          <pre><code>// Get all presence data (read-only)
+// Automatically updated after initialize()
+const allPresence = room.presence; 
+// { clientId1: { x: 10, y: 20, ... }, clientId2: { ... } }
+
+// Get your client ID
+const myId = room.clientId; 
+
+// Get info about connected peers (including yourself)
+// Automatically updated after initialize()
+const peers = room.peers;
+// { clientId1: { username: "...", avatarUrl: "..." }, ... }
+const myInfo = room.peers[room.clientId];
+
+// Update your own presence state
 room.updatePresence({
-  x: 100, 
+  x: 100,
   y: 200,
-  username: "player1"
+  health: 95,
+  // any key: value pairs
 });
 
-// Update shared room state 
-room.updateRoomState({
-  gameState: "started",
-  score: {
-    team1: 5,
-    team2: 3
+// Subscribe to presence changes
+const unsubscribePresence = room.subscribePresence((currentPresence) => {
+  // This callback triggers when any client's presence changes.
+  // Note: room.presence is already updated before this callback.
+  console.log("Presence updated:", currentPresence);
+  // Update your UI based on new presence data
+});
+// Call unsubscribePresence() to stop listening
+
+// Request another client to update their presence
+room.requestPresenceUpdate('client-id-to-update', {
+  type: 'damage', // Custom data for the request
+  amount: 10 
+});
+
+// Handle presence update requests from others
+const unsubscribeRequests = room.subscribePresenceUpdateRequests((updateRequest, fromClientId) => {
+  const myCurrentPresence = room.presence[room.clientId];
+  if (updateRequest.type === 'damage') {
+    room.updatePresence({
+      ...myCurrentPresence,
+      health: myCurrentPresence.health - updateRequest.amount
+    });
   }
 });
+// Call unsubscribeRequests() to stop listening</code></pre>
 
-// Subscribe to presence updates
-room.subscribePresence((allPresence) => {
-  console.log("Players:", allPresence);
+          <h4>Room State (Shared Game/App State)</h4>
+          <pre><code>// Get the current room state (read-only)
+// Automatically updated after initialize()
+const currentRoomState = room.roomState; 
+// { score: { teamA: 5, teamB: 3 }, items: { "item1": { x: 1, y: 1 } } }
+
+// Update the room state (merges with existing state)
+room.updateRoomState({
+  score: { teamA: 6 }, // Updates teamA score
+  items: { 
+    "item1": { x: 2, y: 2 }, // Moves item1
+    "item2": { x: 5, y: 5 }  // Adds item2
+  } 
 });
 
-// Subscribe to room state updates
-room.subscribeRoomState((state) => {
-  console.log("Game state:", state);
+// To remove a key, set it to null
+room.updateRoomState({
+  items: { "item1": null } // Removes item1
 });
 
-// Send events to other clients
+// Subscribe to room state changes
+const unsubscribeRoomState = room.subscribeRoomState((currentState) => {
+  // This callback triggers when room state changes.
+  // Note: room.roomState is already updated before this callback.
+  console.log("Room state updated:", currentState);
+  // Update your UI based on the new state
+});
+// Call unsubscribeRoomState() to stop listening</code></pre>
+
+          <h4>Events (Ephemeral Broadcasts)</h4>
+          <pre><code>// Send an event to other clients
 room.send({
-  type: "move",
-  x: 50,
-  y: 75
+  type: "chat_message", // Custom event type
+  message: "Hello!",
+  echo: true // (Optional) false if sender shouldn't receive it
 });
 
-// Listen for events from other clients
+// Listen for incoming events
 room.onmessage = (event) => {
-  if (event.data.type === "move") {
-    movePiece(event.data.x, event.data.y);
+  const data = event.data; // { type: "...", ..., clientId: "...", username: "..." }
+  switch (data.type) {
+    case 'connected':
+      console.log(`Client connected: ${data.username} (${data.clientId})`);
+      break;
+    case 'disconnected':
+      console.log(`Client disconnected: ${data.username} (${data.clientId})`);
+      break;
+    case 'chat_message':
+      console.log(`${data.username}: ${data.message}`);
+      break;
+    // Handle other custom events
   }
 };</code></pre>
-      </div>
-      
-      <h3>Collection API - For Persistent Data</h3>
-      <div class="api-section">
-        <pre><code>// Create a new record
-const post = await room.collection('post').create({
-  message: "Hello world!",
-  timestamp: Date.now()
+        </div>
+
+        <h3>Collection API - Persistent Data Storage</h3>
+        <div class="api-section">
+          <pre><code>// Access a collection (e.g., 'posts')
+const postsCollection = room.collection('posts'); 
+// IMPORTANT: If you change the data structure, use versioning: 
+// room.collection('posts_v2')
+
+// Create a new record (returns the created record with id, username, created_at)
+let newPost = await postsCollection.create({
+  message: "Hello, persistent world!",
+  likes: 0
+});
+// newPost = { id: "...", type: "posts", username: "...", created_at: "...", message: "...", likes: 0 }
+
+// Get a list of records (returns array, newest first)
+let allPosts = postsCollection.getList(); 
+// Note: May be empty initially while loading. Best to use subscribe.
+// Reverse if you want oldest first: allPosts.reverse()
+
+// Filter records (only equality checks)
+let myPosts = postsCollection.filter({ username: room.peers[room.clientId]?.username }).getList();
+let topLevelPosts = postsCollection.filter({ parentId: null }).getList(); // Example parent/child
+
+// Update a record (only your own records)
+await postsCollection.update(newPost.id, {
+  message: "Updated message",
+  likes: 1 // Update specific fields
 });
 
-// Get all records
-const posts = room.collection('post').getList();
+// Delete a record (only your own records)
+await postsCollection.delete(newPost.id);
 
-// Get filtered records
-const userPosts = room.collection('post')
-  .filter({ author: "username" })
-  .getList();
-
-// Update a record
-await room.collection('post').update(post.id, {
-  message: "Updated message"
+// Subscribe to changes in a list (triggers immediately & on updates)
+const unsubscribePosts = postsCollection.subscribe(function (updatedPosts) {
+  console.log("Posts list updated:", updatedPosts);
+  // Update your UI
 });
+// Call unsubscribePosts() to stop listening
 
-// Delete a record
-await room.collection('post').delete(post.id);
+// Filter then subscribe
+const unsubscribeMyPosts = postsCollection.filter({ username: room.peers[room.clientId]?.username })
+  .subscribe(function (myUpdatedPosts) {
+    console.log("My posts updated:", myUpdatedPosts);
+  });</code></pre>
+        </div>
 
-// Subscribe to changes
-room.collection('post').subscribe((posts) => {
-  console.log("Posts updated:", posts);
-});</code></pre>
-      </div>
-      
-      <h3>LLM API - For AI Functionality</h3>
-      <div class="api-section">
-        <pre><code>// Generate text with AI
+        <h3>LLM API - AI Functionality</h3>
+        <div class="api-section">
+          <h4>AI Chat Completion</h4>
+          <pre><code>// Simple text generation
+let conversationHistory = [
+  { role: "system", content: "You are a helpful pirate assistant." },
+  { role: "user", content: "What be the weather today?" }
+];
 const completion = await websim.chat.completions.create({
-  messages: [
-    {
-      role: "system",
-      content: "You are a helpful assistant."
-    },
-    {
-      role: "user",
-      content: "What is the capital of France?"
-    }
-  ]
+  messages: conversationHistory
 });
+const aiResponse = completion.content; // The AI's text response
+// completion object also has role: 'assistant', content: ...
 
-// Generate images with AI
-const image = await websim.imageGen({
-  prompt: "A beautiful sunset over mountains",
-  aspect_ratio: "16:9"
-});</code></pre>
-      </div>
+// Getting JSON output
+const jsonCompletion = await websim.chat.completions.create({
+  messages: [
+    { role: "system", content: "Extract name and age. Respond with JSON: { name: string, age: number }" },
+    { role: "user", content: "My name is Bob, I'm 30." }
+  ],
+  json: true // Request JSON output
+});
+const jsonData = JSON.parse(jsonCompletion.content); 
+// jsonData = { name: "Bob", age: 30 }
+
+// Image input
+const imageAnalysis = await websim.chat.completions.create({
+  messages: [
+    { role: "user", content: [
+        { type: "text", text: "Is this a cat? Respond JSON { isCat: boolean }" },
+        { type: "image_url", image_url: { url: imageDataUrl } } // imageDataUrl from file upload or other source
+      ] 
+    }
+  ],
+  json: true
+});
+const analysisResult = JSON.parse(imageAnalysis.content);</code></pre>
+
+          <h4>AI Image Generation</h4>
+          <pre><code>// Generate an image
+const imageResult = await websim.imageGen({
+  prompt: "A futuristic cityscape at sunset",
+  aspect_ratio: "16:9" // Optional: "1:1", "9:16", etc.
+  // or width: 1024, height: 576
+  // seed: 123 // Optional: for reproducible results/variations
+});
+const imageUrl = imageResult.url; // URL of the generated image
+
+// Display the image: <img src={imageUrl} /></code></pre>
+
+          <h4>Text to Speech</h4>
+          <pre><code>// Generate audio from text
+const ttsResult = await websim.textToSpeech({
+  text: "Hello, world! This is your captain speaking.",
+  voice: "en-male" // e.g., "en-female", "es-male", etc.
+});
+const audioUrl = ttsResult.url; // URL to the .wav audio file
+
+// Play the audio: <audio controls src={audioUrl}></audio></code></pre>
+        </div>
+
+        <h3>File Upload API</h3>
+        <div class="api-section">
+          <pre><code>// <input type="file" id="fileInput">
+const fileInput = document.getElementById('fileInput');
+const file = fileInput.files[0];
+
+if (file) {
+  try {
+    const uploadedUrl = await websim.upload(file);
+    console.log("File uploaded successfully:", uploadedUrl);
+    // Use uploadedUrl (e.g., in an <img> tag or with LLM image input)
+  } catch (error) {
+    console.error("Upload failed:", error);
+  }
+}</code></pre>
+        </div>
+
+        <h3>Utility Functions</h3>
+        <div class="api-section">
+          <pre><code>// Get current project info
+const project = await window.websim.getCurrentProject();
+// project = { id: "...", title: "...", description: "..." }
+
+// Get project creator info
+const creator = await window.websim.getCreatedBy();
+// creator = { id: "...", username: "...", avatar_url: "..." }
+
+// Get current user info (if logged in)
+const currentUser = await window.websim.getUser(); 
+// currentUser = { id: "...", username: "...", avatar_url: "..." } or null
+
+// Base URL for relative linking (useful for sharing)
+const baseUrl = window.baseUrl; // e.g., "https://websim.ai/p/projectId"
+</code></pre>
+        </div>
+      </div> 
     </div>
   </div>
 
