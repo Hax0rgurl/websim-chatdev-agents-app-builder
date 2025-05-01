@@ -372,12 +372,12 @@ const jsonCompletion = await websim.chat.completions.create({
 const jsonData = JSON.parse(jsonCompletion.content); 
 // jsonData = { name: "Bob", age: 30 }
 
-// Image input
+// Image input (using a URL from upload, generation, or external source)
 const imageAnalysis = await websim.chat.completions.create({
   messages: [
     { role: "user", content: [
         { type: "text", text: "Is this a cat? Respond JSON { isCat: boolean }" },
-        { type: "image_url", image_url: { url: imageDataUrl } } // imageDataUrl from file upload or other source
+        { type: "image_url", image_url: { url: imageDataUrl } } // imageDataUrl from file upload, AI generation, or any public URL
       ] 
     }
   ],
@@ -389,28 +389,30 @@ const analysisResult = JSON.parse(imageAnalysis.content);</code></pre>
           <pre><code>// Generate an image
 const imageResult = await websim.imageGen({
   prompt: "A futuristic cityscape at sunset",
-  aspect_ratio: "16:9" // Optional: "1:1", "9:16", etc.
-  // or width: 1024, height: 576
+  aspect_ratio: "16:9" // Optional: "1:1", "9:16", "2:3", "3:2", etc.
+  // or specify width: 1024, height: 576
   // seed: 123 // Optional: for reproducible results/variations
 });
 const imageUrl = imageResult.url; // URL of the generated image
 
-// Display the image: <img src={imageUrl} /></code></pre>
+// Display the image: &lt;img src={imageUrl} /&gt;</code></pre>
 
           <h4>Text to Speech</h4>
           <pre><code>// Generate audio from text
 const ttsResult = await websim.textToSpeech({
   text: "Hello, world! This is your captain speaking.",
-  voice: "en-male" // e.g., "en-female", "es-male", etc.
+  voice: "en-male" // e.g., "en-female", "es-male", "fr-female", etc. 
+                  // Supported languages: en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh, hu, ko, hi
+                  // Supported genders: male, female
 });
 const audioUrl = ttsResult.url; // URL to the .wav audio file
 
-// Play the audio: <audio controls src={audioUrl}></audio></code></pre>
+// Play the audio: &lt;audio controls src={audioUrl}&gt;&lt;/audio&gt;</code></pre>
         </div>
 
         <h3>File Upload API</h3>
         <div class="api-section">
-          <pre><code>// <input type="file" id="fileInput">
+          <pre><code>// &lt;input type="file" id="fileInput"&gt;
 const fileInput = document.getElementById('fileInput');
 const file = fileInput.files[0];
 
@@ -418,7 +420,7 @@ if (file) {
   try {
     const uploadedUrl = await websim.upload(file);
     console.log("File uploaded successfully:", uploadedUrl);
-    // Use uploadedUrl (e.g., in an <img> tag or with LLM image input)
+    // Use uploadedUrl (e.g., in an &lt;img&gt; tag or with LLM image input)
   } catch (error) {
     console.error("Upload failed:", error);
   }
