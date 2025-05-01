@@ -67,6 +67,11 @@ async function generateResponse(userMessage, isAuto = false) {
   UI.updateProgress(0);
 
   try {
+    // Check if websim API is available
+    if (!window.websim || !window.websim.chat || !window.websim.chat.completions) {
+      throw new Error("Websim API not available. Please ensure you're running in the Websim environment.");
+    }
+
     // Get API documentation content
     const apiDocsElement = document.getElementById('apiDocsContent');
     const apiDocsText = apiDocsElement ? apiDocsElement.innerText : 'API Documentation not available.';
@@ -113,8 +118,8 @@ Your response MUST be a single JSON object containing the following keys, and no
     ];
 
     // Call the Websim LLM API, request JSON output
-    const completion = await websim.chat.completions.create({ messages, json: true });
-    const responseText = (completion.content || '').trim();
+    const completion = await window.websim.chat.completions.create({ messages, json: true });
+    const responseText = (completion && completion.content) ? completion.content.trim() : '';
     
     // attempt to parse JSON, but fallback to raw text if parsing fails
     let data;
