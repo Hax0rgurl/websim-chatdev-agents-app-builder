@@ -1,24 +1,11 @@
 // UI-related functions module
 
-// Get DOM elements
-const chat = document.getElementById('chat');
-const thinking = document.querySelector('.thinking');
-const progress = document.querySelector('.progress');
-const promptInput = document.getElementById('prompt');
-const codeEditor = document.getElementById('code-editor');
-const previewFrame = document.getElementById('preview');
-const proposeBtn = document.getElementById('proposeBtn');
-const viewHistoryBtn = document.getElementById('viewHistoryBtn');
-const approveBtn = document.querySelector('.approve-btn');
-const rejectBtn = document.querySelector('.reject-btn');
-const codeHistoryDiv = document.querySelector('.code-history');
-const toggleApiDocsBtn = document.getElementById('toggleApiDocs');
-
 /**
  * Update the progress bar
  * @param {number} value - Progress value (0-100)
  */
 function updateProgress(value) {
+  const progress = document.querySelector('.progress');
   if (progress) {
     progress.style.width = `${value}%`;
     window.appState.progress_value = value;
@@ -82,6 +69,12 @@ function getAgentAvatar(role) {
  */
 async function addMessage(text, sender = 'user', agentRole = null) {
   if (!text) return;
+  
+  const chat = document.getElementById('chat');
+  if (!chat) {
+    console.error('Chat container not found');
+    return;
+  }
 
   const p = document.createElement('p');
   p.className = sender; // 'user' or 'ai'
@@ -112,7 +105,6 @@ async function addMessage(text, sender = 'user', agentRole = null) {
      p.appendChild(userTag);
   }
 
-
   const messageText = document.createElement('div');
   // Basic sanitization or markdown rendering could happen here
   messageText.textContent = text;
@@ -140,6 +132,12 @@ async function addMessage(text, sender = 'user', agentRole = null) {
  */
 function updatePreview(code) {
   try {
+    const previewFrame = document.getElementById('preview');
+    if (!previewFrame) {
+      console.error('Preview frame not found');
+      return;
+    }
+
     const doc = previewFrame.contentDocument;
     doc.open();
     doc.write(code);
@@ -149,24 +147,37 @@ function updatePreview(code) {
   }
 }
 
+/**
+ * Get UI element references
+ * @returns {Object} Object containing UI element references
+ */
+function getUIElements() {
+  return {
+    chat: document.getElementById('chat'),
+    thinking: document.querySelector('.thinking'),
+    progress: document.querySelector('.progress'),
+    promptInput: document.getElementById('prompt'),
+    codeEditor: document.getElementById('code-editor'),
+    previewFrame: document.getElementById('preview'),
+    proposeBtn: document.getElementById('proposeBtn'),
+    viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+    approveBtn: document.querySelector('.approve-btn'),
+    rejectBtn: document.querySelector('.reject-btn'),
+    codeHistoryDiv: document.querySelector('.code-history'),
+    toggleApiDocsBtn: document.getElementById('toggleApiDocs')
+  };
+}
+
 // Export the functions
 window.UI = {
-  chat,
-  thinking,
-  progress,
-  promptInput,
-  codeEditor,
-  previewFrame,
-  proposeBtn,
-  viewHistoryBtn,
-  approveBtn,
-  rejectBtn,
-  codeHistoryDiv,
-  toggleApiDocsBtn,
   updateProgress,
   highlightAgent,
   getAgentName,
   getAgentAvatar,
   addMessage,
-  updatePreview
+  updatePreview,
+  getUIElements,
+  // Convenience accessor for commonly used elements
+  get codeEditor() { return document.getElementById('code-editor'); },
+  get chat() { return document.getElementById('chat'); }
 };

@@ -12,86 +12,80 @@ window.appState = {
   votes: {}
 };
 
-// Event listeners
-document.getElementById('generateBtn').addEventListener('click', async function() {
-  const promptText = UI.promptInput.value.trim();
-  if (!promptText) return;
+// Event listener for the generate button
+function setupGenerateButtonListener() {
+  const generateBtn = document.getElementById('generateBtn');
+  if (generateBtn) {
+    generateBtn.addEventListener('click', async function() {
+      const promptInput = document.getElementById('prompt');
+      if (!promptInput) return;
 
-  clearTimeout(window.appState.autoConversationTimeout);
-  // Set immediately to true, generateResponse will handle turning it off if needed
-  window.appState.isAutoConversing = true; 
+      const promptText = promptInput.value.trim();
+      if (!promptText) return;
 
-  // Add user message to state *before* calling addMessage UI function
-  // and *before* sending to AI
-  const userMessageEntry = {
-    role: 'user',
-    content: promptText,
-    agent: 'user' // Explicitly mark as user
-  };
-  window.appState.conversation.push(userMessageEntry);
+      clearTimeout(window.appState.autoConversationTimeout);
+      // Set immediately to true, generateResponse will handle turning it off if needed
+      window.appState.isAutoConversing = true; 
 
-  // Update UI
-  await UI.addMessage(promptText, 'user'); // Pass 'user' explicitly
-  UI.promptInput.value = '';
+      // Add user message to state *before* calling addMessage UI function
+      // and *before* sending to AI
+      const userMessageEntry = {
+        role: 'user',
+        content: promptText,
+        agent: 'user' // Explicitly mark as user
+      };
+      window.appState.conversation.push(userMessageEntry);
 
-  // Update shared state immediately after user message
-  await window.Room.updateProjectState();
+      // Update UI
+      await window.UI.addMessage(promptText, 'user'); // Pass 'user' explicitly
+      promptInput.value = '';
 
-  // Trigger AI response generation
-  await Messaging.generateResponse(promptText, true);
-});
+      // Update shared state immediately after user message
+      await window.Room.updateProjectState();
 
-UI.promptInput.addEventListener('keypress', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    document.getElementById('generateBtn').click();
+      // Trigger AI response generation
+      await window.Messaging.generateResponse(promptText, true);
+    });
   }
-});
+}
 
-UI.codeEditor.addEventListener('input', function() {
-  UI.updatePreview(this.value);
-});
-
-UI.proposeBtn.addEventListener('click', CodeVersion.proposeChanges);
-UI.approveBtn.addEventListener('click', () => CodeVersion.vote(true));
-UI.rejectBtn.addEventListener('click', () => CodeVersion.vote(false));
-
-UI.viewHistoryBtn.addEventListener('click', function() {
-  const historyDiv = document.querySelector('.code-history');
-  historyDiv.classList.toggle('visible');
-});
-
-UI.codeHistoryDiv.addEventListener('click', (e) => {
-  const revision = e.target.closest('.revision');
-  if (revision) {
-    const index = parseInt(revision.dataset.index);
-    const code = window.appState.codeHistory[index].code;
-    UI.codeEditor.value = code;
-    UI.updatePreview(code);
+// Event listener for the prompt input
+function setupPromptInputListener() {
+  const promptInput = document.getElementById('prompt');
+  if (promptInput) {
+    promptInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const generateBtn = document.getElementById('generateBtn');
+        if (generateBtn) generateBtn.click();
+      }
+    });
   }
-});
+}
 
-// API Documentation Modal functionality
-const modal = document.getElementById('apiDocsModal');
-const btn = document.getElementById('toggleApiDocs');
-const span = document.getElementsByClassName('close-modal')[0];
-
-btn.onclick = function() {
-  modal.style.display = 'block';
-};
-
-span.onclick = function() {
-  modal.style.display = 'none';
-};
-
-window.onclick = function(event) {
-  if (event.target == modal) {
-    modal.style.display = 'none';
+// Event listener for the code editor
+function setupCodeEditorListener() {
+  const codeEditor = document.getElementById('code-editor');
+  if (codeEditor) {
+    codeEditor.addEventListener('input', function() {
+      window.UI.updatePreview(this.value);
+    });
   }
-};
+}
+
+// Initialize all event listeners
+function setupEventListeners() {
+  // Set up main interaction listeners
+  setupGenerateButtonListener();
+  setupPromptInputListener();
+  setupCodeEditorListener();
+  
+  // The component-specific listeners are now handled in components.js
+  // via the attachEventListeners function after dynamic component loading
+}
 
 // Initialize the application
-(async function init() {
+async function init() {
   console.log('Initializing application...');
 
   // Define initial message locally
@@ -99,6 +93,10 @@ window.onclick = function(event) {
     "Welcome to the Websim Development Team! Our agents specialize in creating " +
     "Websim-specific projects using the available APIs. Check the 'Show API Documentation' " +
     "button for details. Please describe what you'd like to build.";
+
+  // Add event listeners after DOM is loaded and components are ready
+  // This is now handled by components.js, but we setup app-level listeners here
+  setupEventListeners();
 
   // Initialize room first to potentially load existing state
   if (window.Room) {
@@ -115,20 +113,29 @@ window.onclick = function(event) {
         agent: 'project-manager'
       };
       window.appState.conversation.push(welcomeMessageEntry);
-      await UI.addMessage(welcomeMessage, 'ai', 'project-manager');
+      await window.UI.addMessage(welcomeMessage, 'ai', 'project-manager');
       // Sync the initial state if we added the welcome message
       await window.Room.updateProjectState(); 
     }
     // Ensure UI reflects the loaded state (agent highlighting, progress)
-    UI.highlightAgent(window.appState.currentAgent || 'product-owner'); // Default if null
-    UI.updateProgress(window.appState.progress_value || 0); // Default if null
+    window.UI.highlightAgent(window.appState.currentAgent || 'product-owner'); // Default if null
+    window.UI.updateProgress(window.appState.progress_value || 0); // Default if null
 
   } else {
     console.error('Room module not found');
     // Add welcome message locally if room fails, but it won't be synced
-    await UI.addMessage(welcomeMessage, 'ai', 'project-manager');
-    UI.highlightAgent(window.appState.currentAgent);
+    await window.UI.addMessage(welcomeMessage, 'ai', 'project-manager');
+    window.UI.highlightAgent(window.appState.currentAgent);
   }
 
   console.log('Application initialized successfully');
-})();
+}
+
+// Initialize the application once the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', init);
+
+// Export functions for external use if needed
+window.App = {
+  init,
+  setupEventListeners
+};
