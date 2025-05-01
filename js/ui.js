@@ -179,5 +179,7 @@ window.UI = {
   getUIElements,
   // Convenience accessor for commonly used elements
   get codeEditor() { return document.getElementById('code-editor'); },
-  get chat() { return document.getElementById('chat'); }
+  get chat() { return document.getElementById('chat'); },
+  // Accessor for the thinking indicator element
+  get thinking() { return document.querySelector('.thinking'); }
 };
