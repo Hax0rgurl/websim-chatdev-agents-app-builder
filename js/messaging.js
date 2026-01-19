@@ -12,7 +12,18 @@ function handleMessage(event) {
   try {
     if (data.type === 'agent_message') {
       if (data.message) {
-        UI.addMessage(data.message, 'ai', window.appState.currentAgent);
+        // Update local conversation state to keep history in sync for all clients
+        const lastMsg = window.appState.conversation[window.appState.conversation.length - 1];
+        // Avoid duplicates if this client generated the message
+        if (!lastMsg || lastMsg.content !== data.message) {
+          window.appState.conversation.push({
+            role: 'assistant',
+            content: data.message,
+            agent: data.agent_role || window.appState.currentAgent
+          });
+        }
+        
+        UI.addMessage(data.message, 'ai', data.agent_role || window.appState.currentAgent);
       }
 
       if (data.code) {
@@ -117,7 +128,7 @@ When responding:
 3.  If unsure, ask clarifying questions.
 4.  Determine which agent should handle the next step.
 5.  Update the progress percentage based on task completion estimation.
-6.  Decide if the conversation should continue automatically (e.g., if more steps are needed).
+6.  AUTONOMY IS REQUIRED. You must set "continue": true to trigger the next agent unless the user's request is completely satisfied and the project is finished. Do not stop for trivial reasons.
 
 Your response MUST be a single JSON object containing the following keys, and nothing else:
 {
@@ -125,7 +136,7 @@ Your response MUST be a single JSON object containing the following keys, and no
   "code": "HTML/CSS/JS code snippet if generated, otherwise null or empty string.",
   "next_agent": "role-of-the-agent-for-the-next-step",
   "progress": number, // An integer from 0 to 100 representing overall project progress.
-  "continue": boolean // IMPORTANT: Set to true if the team should continue working autonomously on the next step. Only set to false if the project is finished or you are blocked waiting for user input.
+  "continue": boolean // Set to true if the team should continue working automatically, false otherwise.
 }`;
 
     // Prepare message history for LLM
@@ -137,30 +148,18 @@ Your response MUST be a single JSON object containing the following keys, and no
     // Construct the final messages array
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...historyMessages.slice(-10), // Limit history to last 10 messages
-      ...(userMessage ? [{ role: 'user', content: `(user): ${userMessage}` }] : []) // Add current user message if any
+      ...historyMessages.slice(-10) // Limit history to last 10 messages
     ];
 
-    // Call the Websim LLM API, checking for different possible method names and schemas
-    let completion;
-    try {
-      if (window.websim.chat && window.websim.chat.completions) {
-        completion = await window.websim.chat.completions.create({ messages, json: true });
-      } else if (window.websim.chatCompletion) {
-        // Fallback to the schema-based chatCompletion if the standard one isn't available
-        const formattedMessages = messages.map(m => ({
-          role: m.role,
-          content: [{ type: 'text', text: m.content }]
-        }));
-        completion = await window.websim.chatCompletion({ messages: formattedMessages, json: true });
-      } else {
-        throw new Error("No recognized Websim AI chat API found.");
-      }
-    } catch (apiError) {
-      console.error("AI API call failed:", apiError);
-      throw apiError;
+    if (userMessage) {
+      messages.push({ role: 'user', content: `(user): ${userMessage}` });
+    } else if (isAuto) {
+      // Prompt the model to continue if this is an automatic turn
+      messages.push({ role: 'user', content: "(system): The team is collaborating. Continue to the next step immediately." });
     }
 
+    // Call the Websim LLM API, request JSON output
+    const completion = await window.websim.chat.completions.create({ messages, json: true });
     const responseText = (completion && completion.content) ? completion.content.trim() : '';
     
     // attempt to parse JSON, but fallback to raw text if parsing fails
@@ -196,6 +195,14 @@ Your response MUST be a single JSON object containing the following keys, and no
 
     // Display AI reply, associating it with the agent *before* the state update
     const speakingAgent = window.appState.currentAgent; // Agent who generated this response
+
+    // Update conversation state with AI response so history is preserved for next turn
+    window.appState.conversation.push({
+      role: 'assistant',
+      content: data.reply,
+      agent: speakingAgent
+    });
+
     await UI.addMessage(data.reply, 'ai', speakingAgent);
 
     // Handle code snippet if provided
@@ -217,16 +224,14 @@ Your response MUST be a single JSON object containing the following keys, and no
     // If auto-conversing, schedule next turn if 'continue' is true
     clearTimeout(window.appState.autoConversationTimeout); // Clear previous timeout
     if (window.appState.isAutoConversing && data.continue) {
-      console.log(`Scheduling autonomous turn for agent: ${data.next_agent}`);
       window.appState.autoConversationTimeout = setTimeout(() => {
-        // Double check we are still in auto mode before triggering next response
         if (window.appState.isAutoConversing) {
+           // Send empty message to trigger the next agent's turn
           generateResponse('', true);
         }
-      }, 3000); // 3-second delay between agent turns for readability
-    } else if (!data.continue) {
-       console.log("Team has decided to pause autonomous work.");
-       window.appState.isAutoConversing = false; 
+      }, 2000); // 2-second delay between agent turns
+    } else {
+       window.appState.isAutoConversing = false; // Stop auto-conversation if continue is false or not auto-mode
     }
 
     // Broadcast agent message (using the speaking agent's role)

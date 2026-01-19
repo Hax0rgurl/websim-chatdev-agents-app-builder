@@ -38,9 +38,6 @@ function setupGenerateButtonListener() {
 
       // Update UI
       await window.UI.addMessage(promptText, 'user'); // Pass 'user' explicitly
-      
-      // Ensure the team starts working autonomously
-      window.appState.isAutoConversing = true;
       promptInput.value = '';
 
       // Update shared state immediately after user message
