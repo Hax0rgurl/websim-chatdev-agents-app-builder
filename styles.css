@@ -120,10 +120,26 @@ h1 {
 }
 
 #chat p {
-  margin-bottom: 10px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  max-width: 80%
+  margin-bottom: 15px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  max-width: 85%;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+#chat p.ai {
+  border-left: 4px solid #3498db;
+}
+
+#chat p.user {
+  border-right: 4px solid #aed6f1;
+}
+
+.message-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 #chat .ai .agent-tag {
@@ -147,12 +163,13 @@ h1 {
 
 .agent-avatar-mini {
   display: inline-block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
-  margin-right: 5px;
+  margin-right: 8px;
   border-radius: 50%;
   overflow: hidden;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
 }
 
 .agent-avatar-mini svg {

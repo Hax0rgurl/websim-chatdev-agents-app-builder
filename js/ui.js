@@ -106,7 +106,7 @@ async function addMessage(text, sender = 'user', agentRole = null) {
   }
 
   const messageText = document.createElement('div');
-  // Basic sanitization or markdown rendering could happen here
+  messageText.className = 'message-content';
   messageText.textContent = text;
   p.appendChild(messageText);
 
