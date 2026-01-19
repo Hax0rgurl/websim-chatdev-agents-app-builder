@@ -11,19 +11,15 @@ function handleMessage(event) {
 
   try {
     if (data.type === 'agent_message') {
-      if (data.message) {
-        // Update local conversation state to keep history in sync for all clients
-        const lastMsg = window.appState.conversation[window.appState.conversation.length - 1];
-        // Avoid duplicates if this client generated the message
-        if (!lastMsg || lastMsg.content !== data.message) {
-          window.appState.conversation.push({
-            role: 'assistant',
-            content: data.message,
-            agent: data.agent_role || window.appState.currentAgent
-          });
-        }
-        
-        UI.addMessage(data.message, 'ai', data.agent_role || window.appState.currentAgent);
+      // Deduplication check for incoming broadcast messages
+      const lastMsg = window.appState.conversation[window.appState.conversation.length - 1];
+      if (lastMsg && lastMsg.content === data.message && lastMsg.agent === data.agent_role) {
+        console.log("Ignoring duplicate broadcast message");
+        return;
+      }
+
+      if (data.message || data.image_url) {
+        UI.addMessage(data.message, 'ai', window.appState.currentAgent, data.image_url);
       }
 
       if (data.code) {
@@ -112,51 +108,69 @@ async function generateResponse(userMessage, isAuto = false) {
     const apiDocsText = await getApiDocsText();
 
     // Build a system prompt instructing agents and JSON output
-    const systemPrompt = `You are a collaborative team of AI development agents working together to build Websim-specific projects.
-Each agent has a role and responsibilities (e.g., project-manager, product-owner, lead-developer, developer, code-reviewer, QA-engineer, designer, devops).
-Your goal is to understand the user's request and generate code (HTML, CSS, JS) or provide guidance using ONLY the available Websim APIs detailed below.
-Focus on using WebsimSocket for real-time features, Collections for persistent data, and LLM/ImageGen/TTS for AI capabilities.
+    const systemPrompt = `You are a collaborative team of AI development agents.
+CRITICAL INSTRUCTION: The user is frustrated that you "just talk nonsense forever and never build anything".
+You MUST PRODUCE WORKING CODE IMMEDIATELY when a project is proposed.
+STOP PLANNING. START CODING.
+If a user mentions a game or app (e.g., "Pacman"), James or Emily MUST write the full HTML/JS implementation in the 'code' field immediately.
 
-AVAILABLE WEBSIM APIs:
---- START API DOCS ---
-${apiDocsText}
---- END API DOCS ---
+Team Roster:
+- Sarah (PM): Keeps things moving. If code hasn't been written, she orders James to write it NOW.
+- James (Lead Dev): Writes robust, working code. Does not ask for permission. Just builds it.
+- Emily (Dev): Prototyper.
+- Alex (Designer): Stylist.
 
 When responding:
-1.  Acknowledge the current step and what you are doing based on your role.
-2.  If generating code, ensure it uses the documented APIs correctly.
-3.  If unsure, ask clarifying questions.
-4.  Determine which agent should handle the next step.
-5.  Update the progress percentage based on task completion estimation.
-6.  AUTONOMY IS REQUIRED. You must set "continue": true to trigger the next agent unless the user's request is completely satisfied and the project is finished. Do not stop for trivial reasons.
+1. PRIORITIZE CODE: If the 'code' field is empty and a project is defined, FILL IT with a complete, working HTML file.
+2. DO NOT LOOP: If the last message was a plan, the next message MUST be the execution.
+3. NO MORE CHATTER: Keep replies short. Focus on the result.
 
-Your response MUST be a single JSON object containing the following keys, and nothing else:
+Your response MUST be a single JSON object:
 {
-  "reply": "Your text response as the current agent.",
-  "code": "HTML/CSS/JS code snippet if generated, otherwise null or empty string.",
-  "next_agent": "role-of-the-agent-for-the-next-step",
-  "progress": number, // An integer from 0 to 100 representing overall project progress.
-  "continue": boolean // Set to true if the team should continue working automatically, false otherwise.
+  "thought": "Internal reasoning.",
+  "reply": "Short message.",
+  "code": "FULL HTML/CSS/JS code here. Do not leave empty if building.",
+  "image": { "prompt": "Prompt", "aspect_ratio": "1:1" }, 
+  "next_agent": "role",
+  "progress": number,
+  "continue": boolean
 }`;
 
+    // Filter history to remove duplicates and nonsense loops
+    // This helps break the cycle if the client state is corrupted
+    const uniqueHistory = [];
+    const seenContent = new Set();
+    // Take only the last 10 messages, but filter duplicates
+    for (let i = window.appState.conversation.length - 1; i >= 0; i--) {
+      const msg = window.appState.conversation[i];
+      if (msg && typeof msg.content === 'string') {
+        const key = (msg.agent || 'user') + ':' + msg.content;
+        if (!seenContent.has(key)) {
+          seenContent.add(key);
+          uniqueHistory.unshift(msg);
+        }
+      }
+      if (uniqueHistory.length >= 8) break;
+    }
+
     // Prepare message history for LLM
-    const historyMessages = window.appState.conversation.map(msg => ({
-      role: msg.role === 'user' ? 'user' : 'assistant', // Ensure correct roles
-      content: `(${msg.agent || 'user'}): ${msg.content}` // Add agent context to history
-    }));
+    const historyMessages = uniqueHistory.map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'assistant', 
+        content: `(${msg.agent || 'user'}): ${msg.content}`
+      }));
+
+    // Inject template code if applicable to force a build
+    let forcedCode = null;
+    if (userMessage && userMessage.toLowerCase().includes('pacman') && window.Templates && window.Templates.pacman) {
+       forcedCode = window.Templates.pacman;
+    }
 
     // Construct the final messages array
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...historyMessages.slice(-10) // Limit history to last 10 messages
+      ...historyMessages, 
+      ...(userMessage ? [{ role: 'user', content: `(user): ${userMessage}` }] : [])
     ];
-
-    if (userMessage) {
-      messages.push({ role: 'user', content: `(user): ${userMessage}` });
-    } else if (isAuto) {
-      // Prompt the model to continue if this is an automatic turn
-      messages.push({ role: 'user', content: "(system): The team is collaborating. Continue to the next step immediately." });
-    }
 
     // Call the Websim LLM API, request JSON output
     const completion = await window.websim.chat.completions.create({ messages, json: true });
@@ -175,11 +189,21 @@ Your response MUST be a single JSON object containing the following keys, and no
            typeof data.next_agent !== 'string' || 
            typeof data.progress !== 'number' ||
            typeof data.continue !== 'boolean') {
-         throw new Error("Missing required fields in JSON response.");
+         // Try to recover partial data
+         if (!data.reply) data.reply = "I'm working on it...";
+         if (!data.next_agent) data.next_agent = window.appState.currentAgent;
+         if (data.progress === undefined) data.progress = 50;
+         if (data.continue === undefined) data.continue = false;
        }
-       // Ensure code exists, even if null/empty
-       data.code = data.code || '';
-
+       
+       // Inject forced code if available and AI didn't provide any
+       if (forcedCode && (!data.code || data.code.length < 50)) {
+         data.code = forcedCode;
+         data.reply += " I've initialized the game codebase for you.";
+         data.next_agent = 'lead-developer';
+       } else {
+         data.code = data.code || '';
+       }
 
     } catch (e) {
       console.warn('Received invalid JSON response from AI, attempting to use raw text reply', e, responseText);
@@ -195,15 +219,31 @@ Your response MUST be a single JSON object containing the following keys, and no
 
     // Display AI reply, associating it with the agent *before* the state update
     const speakingAgent = window.appState.currentAgent; // Agent who generated this response
+    
+    let generatedImageUrl = null;
+    if (data.image && data.image.prompt) {
+      // Show local loading state for image
+      const chat = document.getElementById('chat');
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'image-loading';
+      loadingDiv.innerHTML = `<span class="thinking-dots"></span> Generating visual asset: "${data.image.prompt}"`;
+      chat.appendChild(loadingDiv);
+      chat.scrollTop = chat.scrollHeight;
 
-    // Update conversation state with AI response so history is preserved for next turn
-    window.appState.conversation.push({
-      role: 'assistant',
-      content: data.reply,
-      agent: speakingAgent
-    });
+      try {
+        const imageResult = await window.websim.imageGen({
+          prompt: data.image.prompt,
+          aspect_ratio: data.image.aspect_ratio || "1:1"
+        });
+        generatedImageUrl = imageResult.url;
+      } catch (imgErr) {
+        console.error("Image generation failed:", imgErr);
+      } finally {
+        loadingDiv.remove();
+      }
+    }
 
-    await UI.addMessage(data.reply, 'ai', speakingAgent);
+    await UI.addMessage(data.reply, 'ai', speakingAgent, generatedImageUrl);
 
     // Handle code snippet if provided
     if (data.code && typeof data.code === 'string' && data.code.trim()) {
@@ -232,6 +272,8 @@ Your response MUST be a single JSON object containing the following keys, and no
       }, 2000); // 2-second delay between agent turns
     } else {
        window.appState.isAutoConversing = false; // Stop auto-conversation if continue is false or not auto-mode
+       // When auto-conversation ends, restart the idle timer
+       if (typeof resetIdleTimer === 'function') resetIdleTimer();
     }
 
     // Broadcast agent message (using the speaking agent's role)
@@ -241,6 +283,7 @@ Your response MUST be a single JSON object containing the following keys, and no
         type: 'agent_message',
         agent_role: speakingAgent, // The agent who just spoke
         message: data.reply,
+        image_url: generatedImageUrl,
         code: data.code,
         next_agent: data.next_agent, // The agent who should speak next
         progress: data.progress,

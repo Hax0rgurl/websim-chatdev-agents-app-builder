@@ -65,10 +65,11 @@ function getAgentAvatar(role) {
  * @param {string} text - Message text
  * @param {string} sender - Sender ('user' or 'ai')
  * @param {string | null} agentRole - Agent role if sender is 'ai'
+ * @param {string | null} imageUrl - Optional image URL
  * @returns {Promise<void>} - Returns void, but marked async for potential future use
  */
-async function addMessage(text, sender = 'user', agentRole = null) {
-  if (!text) return;
+async function addMessage(text, sender = 'user', agentRole = null, imageUrl = null) {
+  if (!text && !imageUrl) return;
   
   const chat = document.getElementById('chat');
   if (!chat) {
@@ -105,15 +106,27 @@ async function addMessage(text, sender = 'user', agentRole = null) {
      p.appendChild(userTag);
   }
 
-  const messageText = document.createElement('div');
-  // Basic sanitization or markdown rendering could happen here
-  messageText.textContent = text;
-  p.appendChild(messageText);
+  if (text) {
+    const messageText = document.createElement('div');
+    messageText.className = 'message-content';
+    messageText.textContent = text;
+    p.appendChild(messageText);
+  }
+
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.className = 'message-image';
+    img.alt = "Generated asset";
+    p.appendChild(img);
+  }
 
   // Append the complete message block to chat
   chat.appendChild(p);
   // Ensure chat scrolls to the bottom
-  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => {
+    chat.scrollTop = chat.scrollHeight;
+  }, 10);
 
   // *** Defer state update to avoid duplicate entries ***
   // The state update (window.appState.conversation.push) should happen
@@ -140,7 +153,14 @@ function updatePreview(code) {
 
     const doc = previewFrame.contentDocument;
     doc.open();
-    doc.write(code);
+    // Inject base style for preview to look decent even if empty
+    const baseStyle = '<style>body{font-family:sans-serif;margin:0;padding:20px;color:#333}</style>';
+    // If the code doesn't start with <html>, inject basic structure
+    if (!code.trim().startsWith('<html') && !code.trim().startsWith('<!DOCTYPE')) {
+       doc.write(baseStyle + code);
+    } else {
+       doc.write(code);
+    }
     doc.close();
   } catch (error) {
     console.error('Error updating preview:', error);

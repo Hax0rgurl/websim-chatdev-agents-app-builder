@@ -45,16 +45,28 @@ async function initializeRoom() {
   // Subscribe to shared state updates
   room.subscribeRoomState(state => {
     let stateChanged = false;
-    if (state.conversation && JSON.stringify(state.conversation) !== JSON.stringify(window.appState.conversation)) {
-      window.appState.conversation = state.conversation;
-      UI.chat.innerHTML = ''; // Clear chat before re-rendering
-      window.appState.conversation.forEach(msg => {
-        // Ensure agent role is passed correctly
-        const role = msg.role === 'user' ? 'user' : 'ai';
-        const agent = msg.agent || (role === 'ai' ? 'project-manager' : 'user'); // Default agent if missing
-        UI.addMessage(msg.content, role, agent);
-      });
-      stateChanged = true;
+    // Basic deduplication check: only update if length is different or last message is different
+    // This prevents tight loops of identical state updates
+    const currentLen = window.appState.conversation.length;
+    const newLen = state.conversation ? state.conversation.length : 0;
+    
+    // Only process update if the new state looks valid and is actually different/newer
+    // We assume state only grows or resets (length 0 or 1)
+    if (state.conversation && (newLen > currentLen || newLen <= 1)) {
+      if (JSON.stringify(state.conversation) !== JSON.stringify(window.appState.conversation)) {
+        window.appState.conversation = state.conversation;
+        UI.chat.innerHTML = ''; // Clear chat before re-rendering
+        
+        // Safety: Only render last 50 messages to prevent DOM overload from loops
+        const renderStart = Math.max(0, window.appState.conversation.length - 50);
+        
+        window.appState.conversation.slice(renderStart).forEach(msg => {
+          const role = msg.role === 'user' ? 'user' : 'ai';
+          const agent = msg.agent || (role === 'ai' ? 'project-manager' : 'user');
+          UI.addMessage(msg.content, role, agent);
+        });
+        stateChanged = true;
+      }
     }
     if (state.currentAgent && state.currentAgent !== window.appState.currentAgent) {
       window.appState.currentAgent = state.currentAgent;
