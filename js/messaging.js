@@ -11,8 +11,8 @@ function handleMessage(event) {
 
   try {
     if (data.type === 'agent_message') {
-      if (data.message) {
-        UI.addMessage(data.message, 'ai', window.appState.currentAgent);
+      if (data.message || data.image_url) {
+        UI.addMessage(data.message, 'ai', window.appState.currentAgent, data.image_url);
       }
 
       if (data.code) {
@@ -135,6 +135,7 @@ Your response MUST be a single JSON object:
   "thought": "Internal reasoning about the current project state and team dynamic.",
   "reply": "Your public message to the team/user.",
   "code": "HTML/CSS/JS code if applicable, or empty string.",
+  "image": { "prompt": "Image generation prompt", "aspect_ratio": "1:1|16:9|9:16" }, // Optional
   "next_agent": "role-of-the-agent-for-the-next-step",
   "progress": number,
   "continue": boolean
@@ -192,7 +193,31 @@ Your response MUST be a single JSON object:
 
     // Display AI reply, associating it with the agent *before* the state update
     const speakingAgent = window.appState.currentAgent; // Agent who generated this response
-    await UI.addMessage(data.reply, 'ai', speakingAgent);
+    
+    let generatedImageUrl = null;
+    if (data.image && data.image.prompt) {
+      // Show local loading state for image
+      const chat = document.getElementById('chat');
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'image-loading';
+      loadingDiv.innerHTML = `<span class="thinking-dots"></span> Generating visual asset: "${data.image.prompt}"`;
+      chat.appendChild(loadingDiv);
+      chat.scrollTop = chat.scrollHeight;
+
+      try {
+        const imageResult = await window.websim.imageGen({
+          prompt: data.image.prompt,
+          aspect_ratio: data.image.aspect_ratio || "1:1"
+        });
+        generatedImageUrl = imageResult.url;
+      } catch (imgErr) {
+        console.error("Image generation failed:", imgErr);
+      } finally {
+        loadingDiv.remove();
+      }
+    }
+
+    await UI.addMessage(data.reply, 'ai', speakingAgent, generatedImageUrl);
 
     // Handle code snippet if provided
     if (data.code && typeof data.code === 'string' && data.code.trim()) {
@@ -230,6 +255,7 @@ Your response MUST be a single JSON object:
         type: 'agent_message',
         agent_role: speakingAgent, // The agent who just spoke
         message: data.reply,
+        image_url: generatedImageUrl,
         code: data.code,
         next_agent: data.next_agent, // The agent who should speak next
         progress: data.progress,

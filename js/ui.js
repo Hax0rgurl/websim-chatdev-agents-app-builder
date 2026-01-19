@@ -65,10 +65,11 @@ function getAgentAvatar(role) {
  * @param {string} text - Message text
  * @param {string} sender - Sender ('user' or 'ai')
  * @param {string | null} agentRole - Agent role if sender is 'ai'
+ * @param {string | null} imageUrl - Optional image URL
  * @returns {Promise<void>} - Returns void, but marked async for potential future use
  */
-async function addMessage(text, sender = 'user', agentRole = null) {
-  if (!text) return;
+async function addMessage(text, sender = 'user', agentRole = null, imageUrl = null) {
+  if (!text && !imageUrl) return;
   
   const chat = document.getElementById('chat');
   if (!chat) {
@@ -105,10 +106,20 @@ async function addMessage(text, sender = 'user', agentRole = null) {
      p.appendChild(userTag);
   }
 
-  const messageText = document.createElement('div');
-  messageText.className = 'message-content';
-  messageText.textContent = text;
-  p.appendChild(messageText);
+  if (text) {
+    const messageText = document.createElement('div');
+    messageText.className = 'message-content';
+    messageText.textContent = text;
+    p.appendChild(messageText);
+  }
+
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.className = 'message-image';
+    img.alt = "Generated asset";
+    p.appendChild(img);
+  }
 
   // Append the complete message block to chat
   chat.appendChild(p);
