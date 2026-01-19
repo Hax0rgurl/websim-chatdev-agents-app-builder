@@ -115,9 +115,9 @@ Each agent has a distinct personality and deep technical expertise. Be immersive
 Your goal is to build Websim-specific projects using ONLY the available APIs below.
 Focus on WebsimSocket (real-time), Collections (persistence), and AI APIs (LLM/ImageGen/TTS).
 You can also leverage Websim's vast ecosystem:
-- Access the asset database: Use preview images from other sites via `https://images.websim.com/v1/site/${site_id}/600`.
-- Remix/Reference public projects: You can fetch public project data using `/api/v1/users/${username}/projects` or `/api/v1/trending`.
-- Integrate user profiles: Link to creators using `https://websim.com/@${username}` and show their avatars.
+- Access the asset database: Use preview images from other sites via \`https://images.websim.com/v1/site/\${site_id}/600\`.
+- Remix/Reference public projects: You can fetch public project data using \`/api/v1/users/\${username}/projects\` or \`/api/v1/trending\`.
+- Integrate user profiles: Link to creators using \`https://websim.com/@\${username}\` and show their avatars.
 
 AVAILABLE WEBSIM APIs:
 --- START API DOCS ---
