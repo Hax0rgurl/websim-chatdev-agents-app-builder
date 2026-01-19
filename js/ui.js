@@ -17,19 +17,15 @@ function updateProgress(value) {
  * @param {string} role - Agent role
  */
 function highlightAgent(role) {
-  if (!role) {
-    console.warn('No role specified for highlighting agent');
-    return;
-  }
+  if (!role) return;
 
   const agents = document.querySelectorAll('.agent');
   agents.forEach(a => a.classList.remove('active'));
 
-  const agent = document.querySelector(`[data-role="${role}"]`);
+  const safeRole = role.replace(/[^a-zA-Z0-9-_]/g, '');
+  const agent = document.querySelector(`[data-role="${safeRole}"]`);
   if (agent) {
     agent.classList.add('active');
-  } else {
-    console.warn(`Agent with role "${role}" not found`);
   }
 }
 
@@ -41,7 +37,9 @@ function highlightAgent(role) {
 function getAgentName(role) {
   if (!role) return 'Unknown Agent';
 
-  const agent = document.querySelector(`[data-role="${role}"]`);
+  // Sanitize role for selector to prevent syntax errors
+  const safeRole = role.replace(/[^a-zA-Z0-9-_]/g, '');
+  const agent = document.querySelector(`[data-role="${safeRole}"]`);
   return agent ? agent.querySelector('.agent-name').textContent : 'Unknown Agent';
 }
 

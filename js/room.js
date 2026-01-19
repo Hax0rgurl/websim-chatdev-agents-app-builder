@@ -50,22 +50,29 @@ async function initializeRoom() {
     const currentLen = window.appState.conversation.length;
     const newLen = state.conversation ? state.conversation.length : 0;
     
-    // Only process update if the new state looks valid and is actually different/newer
-    // We assume state only grows or resets (length 0 or 1)
-    if (state.conversation && (newLen > currentLen || newLen <= 1)) {
-      if (JSON.stringify(state.conversation) !== JSON.stringify(window.appState.conversation)) {
-        window.appState.conversation = state.conversation;
-        UI.chat.innerHTML = ''; // Clear chat before re-rendering
-        
-        // Safety: Only render last 50 messages to prevent DOM overload from loops
-        const renderStart = Math.max(0, window.appState.conversation.length - 50);
-        
-        window.appState.conversation.slice(renderStart).forEach(msg => {
-          const role = msg.role === 'user' ? 'user' : 'ai';
-          const agent = msg.agent || (role === 'ai' ? 'project-manager' : 'user');
-          UI.addMessage(msg.content, role, agent);
-        });
-        stateChanged = true;
+    // Robust conversation syncing:
+    if (state.conversation && Array.isArray(state.conversation)) {
+      const incomingJson = JSON.stringify(state.conversation);
+      const currentJson = JSON.stringify(window.appState.conversation);
+      
+      if (incomingJson !== currentJson) {
+         // Only accept update if it adds info or is a deliberate reset (short length)
+         // Prevents wiping local state if server is momentarily empty
+         if (newLen >= currentLen || newLen < 2) {
+            window.appState.conversation = state.conversation;
+            
+            // Re-render chat
+            UI.chat.innerHTML = ''; 
+            const renderStart = Math.max(0, window.appState.conversation.length - 50);
+            
+            window.appState.conversation.slice(renderStart).forEach(msg => {
+              const role = msg.role === 'user' ? 'user' : 'ai';
+              const agent = msg.agent || (role === 'ai' ? 'project-manager' : 'user');
+              const imageUrl = msg.image_url || null;
+              UI.addMessage(msg.content, role, agent, imageUrl);
+            });
+            stateChanged = true;
+         }
       }
     }
     if (state.currentAgent && state.currentAgent !== window.appState.currentAgent) {

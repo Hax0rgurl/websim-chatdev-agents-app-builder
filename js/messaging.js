@@ -11,15 +11,28 @@ function handleMessage(event) {
 
   try {
     if (data.type === 'agent_message') {
+      const agentRole = data.agent_role || 'project-manager'; // Fallback to prevent "Unknown Agent"
+
       // Deduplication check for incoming broadcast messages
       const lastMsg = window.appState.conversation[window.appState.conversation.length - 1];
-      if (lastMsg && lastMsg.content === data.message && lastMsg.agent === data.agent_role) {
-        console.log("Ignoring duplicate broadcast message");
+      // Check for strict equality on content to identify duplicates (echoes from our own broadcast)
+      if (lastMsg && 
+          lastMsg.content === data.message && 
+          (lastMsg.agent === agentRole || lastMsg.agent === data.agent_role)) {
         return;
       }
 
+      // Sync state if it's a new message (e.g. from another client)
+      window.appState.conversation.push({
+        role: 'assistant',
+        agent: agentRole,
+        content: data.message,
+        image_url: data.image_url,
+        code: data.code
+      });
+
       if (data.message || data.image_url) {
-        UI.addMessage(data.message, 'ai', window.appState.currentAgent, data.image_url);
+        UI.addMessage(data.message, 'ai', agentRole, data.image_url);
       }
 
       if (data.code) {
@@ -242,6 +255,17 @@ Your response MUST be a single JSON object:
         loadingDiv.remove();
       }
     }
+
+    // CRITICAL FIX: Update Local State IMMEDIATELY before UI or Broadcast
+    // This prevents state desync that causes the infinite "planning" loop
+    const newMessageEntry = {
+      role: 'assistant',
+      agent: speakingAgent,
+      content: data.reply,
+      image_url: generatedImageUrl,
+      code: data.code
+    };
+    window.appState.conversation.push(newMessageEntry);
 
     await UI.addMessage(data.reply, 'ai', speakingAgent, generatedImageUrl);
 
