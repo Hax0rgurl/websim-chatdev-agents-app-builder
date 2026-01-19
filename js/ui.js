@@ -151,7 +151,14 @@ function updatePreview(code) {
 
     const doc = previewFrame.contentDocument;
     doc.open();
-    doc.write(code);
+    // Inject base style for preview to look decent even if empty
+    const baseStyle = '<style>body{font-family:sans-serif;margin:0;padding:20px;color:#333}</style>';
+    // If the code doesn't start with <html>, inject basic structure
+    if (!code.trim().startsWith('<html') && !code.trim().startsWith('<!DOCTYPE')) {
+       doc.write(baseStyle + code);
+    } else {
+       doc.write(code);
+    }
     doc.close();
   } catch (error) {
     console.error('Error updating preview:', error);

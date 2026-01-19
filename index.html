@@ -1,28 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="https://websim.ai/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-  <div class="container">
-    <div class="grid">
-      <div id="sidebar-container"></div>
-      
-      <div class="main-content">
-        <div id="chat"></div>
-        <div class="thinking">Team is collaborating<span class="thinking-dots"></span></div>
-        <div class="progress-bar">
-          <div class="progress"></div>
+  <div class="app-layout">
+    <div id="sidebar-container"></div>
+    
+    <div class="main-area">
+      <div class="chat-panel">
+        <div class="panel-header">
+          <h2>Team Chat</h2>
         </div>
-        <textarea id="prompt" rows="3" placeholder="Describe what you'd like to build..."></textarea>
-        <button id="generateBtn">Send Message</button>
+        <div class="chat-scroll-area">
+          <div id="chat"></div>
+        </div>
         
-        <div id="workspace-container"></div>
+        <div class="input-area">
+          <div class="status-bar">
+            <div class="thinking">Team is collaborating<span class="thinking-dots"></span></div>
+            <div class="progress-bar"><div class="progress"></div></div>
+          </div>
+          <div class="input-wrapper">
+            <textarea id="prompt" rows="1" placeholder="Describe what to build..."></textarea>
+            <button id="generateBtn" title="Send Message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
+      
+      <div id="workspace-container"></div>
     </div>
   </div>
 
