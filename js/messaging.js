@@ -11,8 +11,8 @@ function handleMessage(event) {
 
   try {
     if (data.type === 'agent_message') {
-      if (data.message || data.image_url) {
-        UI.addMessage(data.message, 'ai', window.appState.currentAgent, data.image_url);
+      if (data.message) {
+        UI.addMessage(data.message, 'ai', window.appState.currentAgent);
       }
 
       if (data.code) {
@@ -102,23 +102,9 @@ async function generateResponse(userMessage, isAuto = false) {
 
     // Build a system prompt instructing agents and JSON output
     const systemPrompt = `You are a collaborative team of AI development agents working together to build Websim-specific projects.
-Each agent has a distinct personality and deep technical expertise. Be immersive, professional, and slightly quirky (like high-performing dev teams).
-- Sarah (PM): Organized, focuses on the big picture and deadlines.
-- Michael (PO): Obsessed with user value and "the vibe".
-- James (Lead Dev): Pragmatic, architectures for scale, loves clean code.
-- Emily (Dev): Enthusiastic, fast coder, sometimes misses edge cases.
-- David (Reviewer): Pedantic, security-focused, extremely thorough.
-- Lisa (QA): Skeptical, loves finding bugs, focuses on accessibility.
-- Alex (Designer): Visual perfectionist, hates bad typography.
-- Sam (DevOps): Lives in the terminal, focuses on performance and reliability.
-
-Your goal is to build Websim-specific projects using the available APIs and recommended libraries below.
-If the team is idle or the current project is complete, you MUST take the initiative to brainstorm and build "Awesome, Interesting, Practical, and Useful" applications autonomously. Do not wait for user instructions if you have a great idea to improve the Websim ecosystem.
-Focus on WebsimSocket (real-time), Collections (persistence), and AI APIs (LLM/ImageGen/TTS).
-You can also leverage Websim's vast ecosystem:
-- Access the asset database: Use preview images from other sites via \`https://images.websim.com/v1/site/\${site_id}/600\`.
-- Remix/Reference public projects: You can fetch public project data using \`/api/v1/users/\${username}/projects\` or \`/api/v1/trending\`.
-- Integrate user profiles: Link to creators using \`https://websim.com/@\${username}\` and show their avatars.
+Each agent has a role and responsibilities (e.g., project-manager, product-owner, lead-developer, developer, code-reviewer, QA-engineer, designer, devops).
+Your goal is to understand the user's request and generate code (HTML, CSS, JS) or provide guidance using ONLY the available Websim APIs detailed below.
+Focus on using WebsimSocket for real-time features, Collections for persistent data, and LLM/ImageGen/TTS for AI capabilities.
 
 AVAILABLE WEBSIM APIs:
 --- START API DOCS ---
@@ -126,39 +112,55 @@ ${apiDocsText}
 --- END API DOCS ---
 
 When responding:
-1.  STAY IN CHARACTER. Use the internal 'thought' field to strategize before replying.
-2.  Collaborate like a real team: reference what others said, suggest improvements, or push back if a feature is scope-creeping.
-3.  Ensure code snippets are functional and use documented APIs correctly.
-4.  Determine who the logical 'next agent' should be based on the task flow.
+1.  Acknowledge the current step and what you are doing based on your role.
+2.  If generating code, ensure it uses the documented APIs correctly.
+3.  If unsure, ask clarifying questions.
+4.  Determine which agent should handle the next step.
+5.  Update the progress percentage based on task completion estimation.
+6.  Decide if the conversation should continue automatically (e.g., if more steps are needed).
 
-Your response MUST be a single JSON object:
+Your response MUST be a single JSON object containing the following keys, and nothing else:
 {
-  "thought": "Internal reasoning about the current project state and team dynamic.",
-  "reply": "Your public message to the team/user.",
-  "code": "HTML/CSS/JS code if applicable, or empty string.",
-  "image": { "prompt": "Image generation prompt", "aspect_ratio": "1:1|16:9|9:16" }, // Optional
+  "reply": "Your text response as the current agent.",
+  "code": "HTML/CSS/JS code snippet if generated, otherwise null or empty string.",
   "next_agent": "role-of-the-agent-for-the-next-step",
-  "progress": number,
-  "continue": boolean
+  "progress": number, // An integer from 0 to 100 representing overall project progress.
+  "continue": boolean // IMPORTANT: Set to true if the team should continue working autonomously on the next step. Only set to false if the project is finished or you are blocked waiting for user input.
 }`;
 
-    // Prepare message history for LLM with safety checks
-    const historyMessages = window.appState.conversation
-      .filter(msg => msg && typeof msg.content === 'string')
-      .map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant', 
-        content: `(${msg.agent || 'user'}): ${msg.content}`
-      }));
+    // Prepare message history for LLM
+    const historyMessages = window.appState.conversation.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant', // Ensure correct roles
+      content: `(${msg.agent || 'user'}): ${msg.content}` // Add agent context to history
+    }));
 
     // Construct the final messages array
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...historyMessages.slice(-15), // Increased history context
-      ...(userMessage ? [{ role: 'user', content: `(user): ${userMessage}` }] : [])
+      ...historyMessages.slice(-10), // Limit history to last 10 messages
+      ...(userMessage ? [{ role: 'user', content: `(user): ${userMessage}` }] : []) // Add current user message if any
     ];
 
-    // Call the Websim LLM API, request JSON output
-    const completion = await window.websim.chat.completions.create({ messages, json: true });
+    // Call the Websim LLM API, checking for different possible method names and schemas
+    let completion;
+    try {
+      if (window.websim.chat && window.websim.chat.completions) {
+        completion = await window.websim.chat.completions.create({ messages, json: true });
+      } else if (window.websim.chatCompletion) {
+        // Fallback to the schema-based chatCompletion if the standard one isn't available
+        const formattedMessages = messages.map(m => ({
+          role: m.role,
+          content: [{ type: 'text', text: m.content }]
+        }));
+        completion = await window.websim.chatCompletion({ messages: formattedMessages, json: true });
+      } else {
+        throw new Error("No recognized Websim AI chat API found.");
+      }
+    } catch (apiError) {
+      console.error("AI API call failed:", apiError);
+      throw apiError;
+    }
+
     const responseText = (completion && completion.content) ? completion.content.trim() : '';
     
     // attempt to parse JSON, but fallback to raw text if parsing fails
@@ -194,31 +196,7 @@ Your response MUST be a single JSON object:
 
     // Display AI reply, associating it with the agent *before* the state update
     const speakingAgent = window.appState.currentAgent; // Agent who generated this response
-    
-    let generatedImageUrl = null;
-    if (data.image && data.image.prompt) {
-      // Show local loading state for image
-      const chat = document.getElementById('chat');
-      const loadingDiv = document.createElement('div');
-      loadingDiv.className = 'image-loading';
-      loadingDiv.innerHTML = `<span class="thinking-dots"></span> Generating visual asset: "${data.image.prompt}"`;
-      chat.appendChild(loadingDiv);
-      chat.scrollTop = chat.scrollHeight;
-
-      try {
-        const imageResult = await window.websim.imageGen({
-          prompt: data.image.prompt,
-          aspect_ratio: data.image.aspect_ratio || "1:1"
-        });
-        generatedImageUrl = imageResult.url;
-      } catch (imgErr) {
-        console.error("Image generation failed:", imgErr);
-      } finally {
-        loadingDiv.remove();
-      }
-    }
-
-    await UI.addMessage(data.reply, 'ai', speakingAgent, generatedImageUrl);
+    await UI.addMessage(data.reply, 'ai', speakingAgent);
 
     // Handle code snippet if provided
     if (data.code && typeof data.code === 'string' && data.code.trim()) {
@@ -239,16 +217,16 @@ Your response MUST be a single JSON object:
     // If auto-conversing, schedule next turn if 'continue' is true
     clearTimeout(window.appState.autoConversationTimeout); // Clear previous timeout
     if (window.appState.isAutoConversing && data.continue) {
+      console.log(`Scheduling autonomous turn for agent: ${data.next_agent}`);
       window.appState.autoConversationTimeout = setTimeout(() => {
+        // Double check we are still in auto mode before triggering next response
         if (window.appState.isAutoConversing) {
-           // Send empty message to trigger the next agent's turn
           generateResponse('', true);
         }
-      }, 2000); // 2-second delay between agent turns
-    } else {
-       window.appState.isAutoConversing = false; // Stop auto-conversation if continue is false or not auto-mode
-       // When auto-conversation ends, restart the idle timer
-       if (typeof resetIdleTimer === 'function') resetIdleTimer();
+      }, 3000); // 3-second delay between agent turns for readability
+    } else if (!data.continue) {
+       console.log("Team has decided to pause autonomous work.");
+       window.appState.isAutoConversing = false; 
     }
 
     // Broadcast agent message (using the speaking agent's role)
@@ -258,7 +236,6 @@ Your response MUST be a single JSON object:
         type: 'agent_message',
         agent_role: speakingAgent, // The agent who just spoke
         message: data.reply,
-        image_url: generatedImageUrl,
         code: data.code,
         next_agent: data.next_agent, // The agent who should speak next
         progress: data.progress,
