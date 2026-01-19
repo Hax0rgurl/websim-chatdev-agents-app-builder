@@ -6,6 +6,7 @@ window.appState = {
   currentAgent: 'product-owner',
   progress_value: 0,
   autoConversationTimeout: null,
+  idleInitiativeTimeout: null,
   isAutoConversing: false,
   codeHistory: [],
   pendingChanges: null,
@@ -45,8 +46,46 @@ function setupGenerateButtonListener() {
 
       // Trigger AI response generation
       await window.Messaging.generateResponse(promptText, true);
+      resetIdleTimer();
     });
   }
+}
+
+/**
+ * Reset the idle timer for autonomous actions
+ */
+function resetIdleTimer() {
+  clearTimeout(window.appState.idleInitiativeTimeout);
+  // If not currently talking, set a timer to start an autonomous project after 45 seconds of silence
+  if (!window.appState.isAutoConversing) {
+    window.appState.idleInitiativeTimeout = setTimeout(triggerAutonomousInitiative, 45000);
+  }
+}
+
+/**
+ * Trigger an autonomous project initiative
+ */
+async function triggerAutonomousInitiative() {
+  if (window.appState.isAutoConversing) return;
+  
+  // Coordination: Only the 'oldest' connected peer triggers autonomous actions to avoid duplicates
+  if (window.Room.room) {
+    const peerIds = Object.keys(window.Room.room.peers).sort();
+    if (peerIds[0] !== window.Room.room.clientId) {
+      // Not the lead client, but we still reset our timer to watch for silence
+      resetIdleTimer();
+      return;
+    }
+  }
+
+  console.log("Team is taking autonomous initiative...");
+  window.appState.isAutoConversing = true;
+  
+  // Force PM to start the initiative
+  window.appState.currentAgent = 'project-manager';
+  window.UI.highlightAgent('project-manager');
+  
+  await window.Messaging.generateResponse("The team is currently idle. Sarah, let's initiate a new project to build something awesome and practical for the Websim community.", true);
 }
 
 // Event listener for the prompt input
@@ -120,6 +159,9 @@ async function init() {
     // Ensure UI reflects the loaded state (agent highlighting, progress)
     window.UI.highlightAgent(window.appState.currentAgent || 'product-owner'); // Default if null
     window.UI.updateProgress(window.appState.progress_value || 0); // Default if null
+    
+    // Start the idle timer
+    resetIdleTimer();
 
   } else {
     console.error('Room module not found');

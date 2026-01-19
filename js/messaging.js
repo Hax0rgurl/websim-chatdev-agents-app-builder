@@ -113,6 +113,7 @@ Each agent has a distinct personality and deep technical expertise. Be immersive
 - Sam (DevOps): Lives in the terminal, focuses on performance and reliability.
 
 Your goal is to build Websim-specific projects using the available APIs and recommended libraries below.
+If the team is idle or the current project is complete, you MUST take the initiative to brainstorm and build "Awesome, Interesting, Practical, and Useful" applications autonomously. Do not wait for user instructions if you have a great idea to improve the Websim ecosystem.
 Focus on WebsimSocket (real-time), Collections (persistence), and AI APIs (LLM/ImageGen/TTS).
 You can also leverage Websim's vast ecosystem:
 - Access the asset database: Use preview images from other sites via \`https://images.websim.com/v1/site/\${site_id}/600\`.
@@ -246,6 +247,8 @@ Your response MUST be a single JSON object:
       }, 2000); // 2-second delay between agent turns
     } else {
        window.appState.isAutoConversing = false; // Stop auto-conversation if continue is false or not auto-mode
+       // When auto-conversation ends, restart the idle timer
+       if (typeof resetIdleTimer === 'function') resetIdleTimer();
     }
 
     // Broadcast agent message (using the speaking agent's role)
